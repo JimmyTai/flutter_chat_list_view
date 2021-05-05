@@ -130,17 +130,14 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
     _updateIndexAndAlignment();
     return Listener(
       onPointerDown: (_) {
-        print('user touched');
         _isUserScrolling = true;
       },
       onPointerUp: (_) {
-        print('user cancel touch');
         _isUserScrolling = false;
       },
       child: NotificationListener<ScrollNotification>(
         onNotification: (scrollInfo) {
           if (scrollInfo is UserScrollNotification) {
-            print('user scroll: ${scrollInfo.direction}');
             _isUserScrolling = scrollInfo.direction != ScrollDirection.idle;
           }
           return false;
@@ -157,7 +154,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
   }
 
   void _updateIndexAndAlignment() {
-    print('_updateIndexAndAlignment');
     if (isTransitioning) return;
     final int newLen = widget.itemCount;
     final itemPositionsNotifier = widget.itemPositionsNotifier;
@@ -165,7 +161,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
       final positions = itemPositionsNotifier.itemPositions.value.toList()..sort((a, b) => (a.index - b.index));
       final first = positions.first;
       final last = positions.last;
-      print('_updateIndexAndAlignment positions: $positions');
       final bool hasFirst = positions.any((element) => element.index == 0);
       final bool hasLast =
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
@@ -179,7 +174,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
           }
         } else if (last.itemTrailingEdge == 1) {
           if (first.itemLeadingEdge < 0.3) {
-            print('_updateIndexAndAlignment: out of viewport');
             primary.alignment = 0;
             secondary.alignment = 0;
           }
@@ -199,7 +193,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
           final int diff = newLen - _len;
           final int frontDiff = widget.messageIds.indexOf(_oldFirstId ?? '');
           if (frontDiff > 0) {
-            print('_updateIndexAndAlignment diff: $diff');
             primary.target = primary.target + diff;
             secondary.target = secondary.target + diff;
           }
@@ -208,7 +201,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
         final int diff = newLen - _len;
         final int frontDiff = widget.messageIds.indexOf(_oldFirstId ?? '');
         if (frontDiff > 0) {
-          print('_updateIndexAndAlignment diff: $diff');
           primary.target = primary.target + diff;
           secondary.target = secondary.target + diff;
         }
@@ -225,6 +217,5 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
     }
     _oldFirstId = widget.messageIds.first;
     _len = newLen;
-    print('target: ${primary.target}, alignment: ${primary.alignment}');
   }
 }
