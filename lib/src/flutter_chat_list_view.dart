@@ -5,6 +5,8 @@ import 'package:flutter_chat_list_view/src/lazy_load_scroll_view.dart';
 import './base/scrollable_positioned_list.dart';
 import 'base/item_positions_listener.dart';
 
+typedef OnPageAtBottom = void Function(bool);
+
 class ChatListView extends ScrollablePositionedList {
   const ChatListView.builder({
     @required this.messageIds,
@@ -24,6 +26,7 @@ class ChatListView extends ScrollablePositionedList {
     this.onEndOfPage,
     this.onPageScrollStart,
     this.onPageScrollEnd,
+    this.onPageAtBottom,
   })  : assert(messageIds != null),
         assert(itemCount != null),
         assert(itemBuilder != null),
@@ -64,6 +67,7 @@ class ChatListView extends ScrollablePositionedList {
     this.onEndOfPage,
     this.onPageScrollStart,
     this.onPageScrollEnd,
+    this.onPageAtBottom,
   })  : assert(messageIds != null),
         assert(itemCount != null),
         assert(itemBuilder != null),
@@ -103,6 +107,8 @@ class ChatListView extends ScrollablePositionedList {
   /// Called when the list scrolling ends
   final VoidCallback onPageScrollEnd;
 
+  final OnPageAtBottom onPageAtBottom;
+
   @override
   _ChatListViewState createState() => _ChatListViewState();
 }
@@ -111,14 +117,17 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
   bool _isUserScrolling = false;
   int _len = 0;
   String _oldFirstId;
-  VoidCallback listener;
+  bool _isAtBottom;
+
+  VoidCallback _listener;
 
   @override
   void initState() {
-    widget.itemPositionsNotifier?.itemPositions?.addListener(listener = () {
+    widget.itemPositionsNotifier?.itemPositions?.addListener(_onItemPositionsListener);
+    widget.itemPositionsNotifier?.itemPositions?.addListener(_listener = () {
       setState(() {});
-      if (listener != null) {
-        widget.itemPositionsNotifier?.itemPositions?.removeListener(listener);
+      if (_listener != null) {
+        widget.itemPositionsNotifier?.itemPositions?.removeListener(_listener);
       }
     });
     WidgetsBinding.instance?.addPostFrameCallback((_) {
@@ -153,6 +162,23 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    widget.itemPositionsNotifier?.itemPositions?.removeListener(_onItemPositionsListener);
+    super.dispose();
+  }
+
+  void _onItemPositionsListener() {
+    final itemPositionsNotifier = widget.itemPositionsNotifier;
+    final bool isAtBottom = itemPositionsNotifier != null &&
+        itemPositionsNotifier.itemPositions.value.isNotEmpty &&
+        itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0);
+    if (isAtBottom != _isAtBottom) {
+      widget.onPageAtBottom?.call(isAtBottom);
+    }
+    _isAtBottom = isAtBottom;
   }
 
   void _updateIndexAndAlignment() {

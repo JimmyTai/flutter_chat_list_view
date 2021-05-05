@@ -148,6 +148,9 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
     return Container(
       color: Colors.grey.withOpacity(0.1),
       child: ChatListView.builder(
+        onPageAtBottom: (atBottom) {
+          print('is page at bottom: $atBottom');
+        },
         messageIds: data.map((item) => item.dataIndex.toString()).toList(),
         itemCount: data.length,
         itemBuilder: (context, index) => item(index, orientation),
