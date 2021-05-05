@@ -3,6 +3,8 @@ import 'package:flutter/widgets.dart';
 
 enum _LoadingStatus { loading, stable }
 
+typedef OnPageAtBottom = void Function(bool);
+
 /// Wrapper around a [Scrollable] which triggers [onEndOfPage]/[onStartOfPage] the Scrollable
 /// reaches to the start or end of the view extent.
 class LazyLoadScrollView extends StatefulWidget {

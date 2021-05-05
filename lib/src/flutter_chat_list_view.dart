@@ -24,6 +24,7 @@ class ChatListView extends ScrollablePositionedList {
     this.onEndOfPage,
     this.onPageScrollStart,
     this.onPageScrollEnd,
+    this.onPageAtBottom,
   }) : super.builder(
           key: key,
           itemCount: itemCount,
@@ -62,6 +63,7 @@ class ChatListView extends ScrollablePositionedList {
     this.onEndOfPage,
     this.onPageScrollStart,
     this.onPageScrollEnd,
+    this.onPageAtBottom,
   }) : super.separated(
           key: key,
           itemCount: itemCount,
@@ -97,6 +99,8 @@ class ChatListView extends ScrollablePositionedList {
   /// Called when the list scrolling ends
   final VoidCallback? onPageScrollEnd;
 
+  final OnPageAtBottom? onPageAtBottom;
+
   @override
   _ChatListViewState createState() => _ChatListViewState();
 }
@@ -106,6 +110,7 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
   int _len = 0;
   String? _oldFirstId;
   VoidCallback? listener;
+  bool? _isAtBottom;
 
   @override
   void initState() {
@@ -115,6 +120,7 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
         widget.itemPositionsNotifier?.itemPositions.removeListener(listener!);
       }
     });
+    widget.itemPositionsNotifier?.itemPositions.addListener(_onItemPositionsListener);
     WidgetsBinding.instance?.addPostFrameCallback((_) {
       _updateIndexAndAlignment();
     });
@@ -147,6 +153,23 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    widget.itemPositionsNotifier?.itemPositions.removeListener(_onItemPositionsListener);
+    super.dispose();
+  }
+
+  void _onItemPositionsListener() {
+    final itemPositionsNotifier = widget.itemPositionsNotifier;
+    final bool isAtBottom = itemPositionsNotifier != null &&
+        itemPositionsNotifier.itemPositions.value.isNotEmpty &&
+        itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0);
+    if (isAtBottom != _isAtBottom) {
+      widget.onPageAtBottom?.call(isAtBottom);
+    }
+    _isAtBottom = isAtBottom;
   }
 
   void _updateIndexAndAlignment() {
