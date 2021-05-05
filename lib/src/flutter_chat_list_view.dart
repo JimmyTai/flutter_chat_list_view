@@ -239,13 +239,13 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
         opacity.parent = Tween<double>(begin: 0.0, end: 0.0)
             .animate(AnimationController(vsync: this, duration: Duration())..forward());
       }
+      _oldFirstId = widget.messageIds.first;
     } else {
       if (opacity.value != 1) {
         opacity.parent = Tween<double>(begin: 1.0, end: 1.0)
             .animate(AnimationController(vsync: this, duration: Duration())..forward());
       }
     }
-    _oldFirstId = widget.messageIds.first;
     _len = newLen;
   }
 }
