@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -86,15 +88,6 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
 
       _scrollPosition = pixels;
     }
-    if (notification is OverscrollNotification) {
-      if (notification.overscroll > 0) {
-        _onEndOfPage();
-      }
-      if (notification.overscroll < 0) {
-        _onStartOfPage();
-      }
-      return true;
-    }
     return false;
   }
 
@@ -102,7 +95,7 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
     if (_loadMoreStatus == _LoadingStatus.stable) {
       if (widget.onEndOfPage != null) {
         _loadMoreStatus = _LoadingStatus.loading;
-        widget.onEndOfPage().whenComplete(() {
+        widget.onEndOfPage().then((value) => _waitNextBuild()).whenComplete(() {
           _loadMoreStatus = _LoadingStatus.stable;
         });
       }
@@ -113,10 +106,19 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
     if (_loadMoreStatus == _LoadingStatus.stable) {
       if (widget.onStartOfPage != null) {
         _loadMoreStatus = _LoadingStatus.loading;
-        widget.onStartOfPage().whenComplete(() {
+        widget.onStartOfPage().then((value) => _waitNextBuild()).whenComplete(() {
           _loadMoreStatus = _LoadingStatus.stable;
         });
       }
     }
+  }
+
+  Future<void> _waitNextBuild() async {
+    final Completer completer = Completer();
+    await Future.delayed(Duration(milliseconds: 1000));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      completer.complete();
+    });
+    await completer.future.timeout(Duration(milliseconds: 500), onTimeout: () {});
   }
 }
