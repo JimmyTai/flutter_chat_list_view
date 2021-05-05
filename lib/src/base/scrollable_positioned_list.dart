@@ -174,6 +174,14 @@ class ItemScrollController {
 
   ScrollablePositionedListState _scrollableListState;
 
+  void setPosition({@required int index, double alignment = 0}) {
+    if (!isAttached) return;
+    _scrollableListState.primary.target = index;
+    _scrollableListState.secondary.target = index;
+    _scrollableListState.primary.alignment = alignment;
+    _scrollableListState.secondary.alignment = alignment;
+  }
+
   /// Immediately, without animation, reconfigure the list so that the item at
   /// [index]'s leading edge is at the given [alignment].
   ///
