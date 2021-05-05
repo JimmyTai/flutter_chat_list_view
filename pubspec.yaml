@@ -1,0 +1,19 @@
+name: flutter_chat_list_view
+description: ChatListView is a listview designed for IM usage. 
+version: 0.0.1
+author: JimmyTai
+homepage: https://github.com/JimmyTai
+
+environment:
+  sdk: ">=2.12.0-0 <3.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  collection: ^1.15.0-nullsafety.4
+
+dev_dependencies:
+  pedantic: ^1.10.0-0
+  flutter_test:
+    sdk: flutter
