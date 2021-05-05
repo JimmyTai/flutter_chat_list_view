@@ -5,6 +5,8 @@ import 'package:flutter_chat_list_view/src/lazy_load_scroll_view.dart';
 import './base/scrollable_positioned_list.dart';
 import 'base/item_positions_listener.dart';
 
+typedef OnPageAtBottom = void Function(bool);
+
 class ChatListView extends ScrollablePositionedList {
   const ChatListView.builder({
     required this.messageIds,
@@ -109,18 +111,19 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
   bool _isUserScrolling = false;
   int _len = 0;
   String? _oldFirstId;
-  VoidCallback? listener;
   bool? _isAtBottom;
+
+  VoidCallback? _listener;
 
   @override
   void initState() {
-    widget.itemPositionsNotifier?.itemPositions.addListener(listener = () {
+    widget.itemPositionsNotifier?.itemPositions.addListener(_onItemPositionsListener);
+    widget.itemPositionsNotifier?.itemPositions.addListener(_listener = () {
       setState(() {});
-      if (listener != null) {
-        widget.itemPositionsNotifier?.itemPositions.removeListener(listener!);
+      if (_listener != null) {
+        widget.itemPositionsNotifier?.itemPositions.removeListener(_listener!);
       }
     });
-    widget.itemPositionsNotifier?.itemPositions.addListener(_onItemPositionsListener);
     WidgetsBinding.instance?.addPostFrameCallback((_) {
       _updateIndexAndAlignment();
     });
