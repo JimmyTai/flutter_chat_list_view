@@ -13,8 +13,6 @@ class ChatListView extends ScrollablePositionedList {
     Key? key,
     ItemScrollController? itemScrollController,
     ItemPositionsListener? itemPositionsListener,
-    Axis scrollDirection = Axis.vertical,
-    bool reverse = false,
     ScrollPhysics? physics,
     int? semanticChildCount,
     EdgeInsets? padding,
@@ -34,8 +32,8 @@ class ChatListView extends ScrollablePositionedList {
           itemPositionsListener: itemPositionsListener,
           initialScrollIndex: 0,
           initialAlignment: 0,
-          scrollDirection: scrollDirection,
-          reverse: reverse,
+          scrollDirection: Axis.vertical,
+          reverse: true,
           physics: physics,
           semanticChildCount: semanticChildCount,
           padding: padding,
@@ -53,8 +51,6 @@ class ChatListView extends ScrollablePositionedList {
     Key? key,
     ItemScrollController? itemScrollController,
     ItemPositionsListener? itemPositionsListener,
-    Axis scrollDirection = Axis.vertical,
-    bool reverse = false,
     ScrollPhysics? physics,
     int? semanticChildCount,
     EdgeInsets? padding,
@@ -75,8 +71,8 @@ class ChatListView extends ScrollablePositionedList {
           itemPositionsListener: itemPositionsListener,
           initialScrollIndex: 0,
           initialAlignment: 0,
-          scrollDirection: scrollDirection,
-          reverse: reverse,
+          scrollDirection: Axis.vertical,
+          reverse: true,
           physics: physics,
           semanticChildCount: semanticChildCount,
           padding: padding,
@@ -186,6 +182,8 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
           if (first.itemLeadingEdge == 0) {
             primary.target = 0;
             primary.alignment = 0;
+            secondary.target = 0;
+            secondary.alignment = 0;
           } else {
             jumpTo(index: 0, alignment: 0);
           }
