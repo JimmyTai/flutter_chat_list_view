@@ -1,0 +1,16 @@
+name: flutter_chat_list_view_example
+
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_chat_list_view:
+    path: ../
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

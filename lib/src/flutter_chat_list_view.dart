@@ -188,6 +188,8 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
           if (first.itemLeadingEdge == 0) {
             primary.target = 0;
             primary.alignment = 0;
+            secondary.target = 0;
+            secondary.alignment = 0;
           } else {
             jumpTo(index: 0, alignment: 0);
           }
