@@ -6,13 +6,17 @@ import './base/scrollable_positioned_list.dart';
 import 'base/item_positions_listener.dart';
 
 typedef OnPageAtBottom = void Function(bool);
+typedef LatestMessageIdBuilder = String Function();
 
 class ChatListView extends ScrollablePositionedList {
   const ChatListView.builder({
+    @required this.latestMessageIdBuilder,
     @required this.messageIds,
     @required int itemCount,
     @required IndexedWidgetBuilder itemBuilder,
     Key key,
+    int initialScrollIndex = 0,
+    double initialAlignment = 0.0,
     ItemScrollController itemScrollController,
     ItemPositionsListener itemPositionsListener,
     ScrollPhysics physics,
@@ -36,8 +40,8 @@ class ChatListView extends ScrollablePositionedList {
           itemBuilder: itemBuilder,
           itemScrollController: itemScrollController,
           itemPositionsListener: itemPositionsListener,
-          initialScrollIndex: 0,
-          initialAlignment: 0,
+          initialScrollIndex: initialScrollIndex,
+          initialAlignment: initialAlignment,
           scrollDirection: Axis.vertical,
           reverse: true,
           physics: physics,
@@ -49,11 +53,14 @@ class ChatListView extends ScrollablePositionedList {
         );
 
   ChatListView.separated({
+    @required this.latestMessageIdBuilder,
     @required this.messageIds,
     @required int itemCount,
     @required IndexedWidgetBuilder itemBuilder,
     @required IndexedWidgetBuilder separatorBuilder,
     Key key,
+    int initialScrollIndex = 0,
+    double initialAlignment = 0.0,
     ItemScrollController itemScrollController,
     ItemPositionsListener itemPositionsListener,
     ScrollPhysics physics,
@@ -79,8 +86,8 @@ class ChatListView extends ScrollablePositionedList {
           separatorBuilder: separatorBuilder,
           itemScrollController: itemScrollController,
           itemPositionsListener: itemPositionsListener,
-          initialScrollIndex: 0,
-          initialAlignment: 0,
+          initialScrollIndex: initialScrollIndex,
+          initialAlignment: initialAlignment,
           scrollDirection: Axis.vertical,
           reverse: true,
           physics: physics,
@@ -94,6 +101,8 @@ class ChatListView extends ScrollablePositionedList {
 
   /// all the message Ids in your list, the latest message is from position 0
   final List<String> messageIds;
+
+  final LatestMessageIdBuilder latestMessageIdBuilder;
 
   /// Called when the [child] reaches the start of the list
   final AsyncCallback onStartOfPage;
@@ -117,21 +126,30 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
   bool _isUserScrolling = false;
   int _len = 0;
   String _oldFirstId;
+  List<String> _oldMessageIds = [];
   bool _isAtBottom;
+  bool _oldContainLatestMessage;
 
   VoidCallback _listener;
 
+  bool get containLatestMessage {
+    if (widget.latestMessageIdBuilder == null) return true;
+    return widget.messageIds.contains(widget.latestMessageIdBuilder());
+  }
+
   @override
   void initState() {
+    _oldMessageIds
+      ..clear()
+      ..addAll(widget.messageIds);
+    _oldContainLatestMessage =
+        (widget.initialScrollIndex == 0 && widget.initialAlignment == 0) ? true : containLatestMessage;
     widget.itemPositionsNotifier?.itemPositions?.addListener(_onItemPositionsListener);
     widget.itemPositionsNotifier?.itemPositions?.addListener(_listener = () {
       setState(() {});
       if (_listener != null) {
         widget.itemPositionsNotifier?.itemPositions?.removeListener(_listener);
       }
-    });
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
-      _updateIndexAndAlignment();
     });
     super.initState();
   }
@@ -172,9 +190,11 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
 
   void _onItemPositionsListener() {
     final itemPositionsNotifier = widget.itemPositionsNotifier;
-    final bool isAtBottom = itemPositionsNotifier != null &&
-        itemPositionsNotifier.itemPositions.value.isNotEmpty &&
-        itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0);
+    final bool isAtBottom = itemPositionsNotifier == null ||
+        (containLatestMessage &&
+            itemPositionsNotifier != null &&
+            itemPositionsNotifier.itemPositions.value.isNotEmpty &&
+            itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0));
     if (isAtBottom != _isAtBottom) {
       widget.onPageAtBottom?.call(isAtBottom);
     }
@@ -193,23 +213,25 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
       final bool hasLast =
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
       if (hasFirst && hasLast) {
-        primary.target = 0;
-        secondary.target = 0;
-        if (first.itemLeadingEdge == 0 && last.itemTrailingEdge < 0.7) {
-          if (last.itemTrailingEdge != 1) {
-            primary.alignment = 1 - last.itemTrailingEdge;
-            secondary.alignment = 1 - last.itemTrailingEdge;
-          }
-        } else if (last.itemTrailingEdge == 1) {
-          if (first.itemLeadingEdge < 0.3) {
+        if (_len != widget.itemCount) {
+          primary.target = 0;
+          secondary.target = 0;
+          if (first.itemLeadingEdge == 0 && last.itemTrailingEdge < 0.7) {
+            if (last.itemTrailingEdge != 1) {
+              primary.alignment = 1 - last.itemTrailingEdge;
+              secondary.alignment = 1 - last.itemTrailingEdge;
+            }
+          } else if (last.itemTrailingEdge == 1) {
+            if (first.itemLeadingEdge < 0.3) {
+              primary.alignment = 0;
+              secondary.alignment = 0;
+            }
+          } else {
             primary.alignment = 0;
             secondary.alignment = 0;
           }
-        } else {
-          primary.alignment = 0;
-          secondary.alignment = 0;
         }
-      } else if (hasFirst) {
+      } else if (hasFirst && _oldContainLatestMessage && containLatestMessage) {
         if (!_isUserScrolling) {
           if (first.itemLeadingEdge == 0) {
             primary.target = 0;
@@ -240,12 +262,16 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
             .animate(AnimationController(vsync: this, duration: Duration())..forward());
       }
       _oldFirstId = widget.messageIds.first;
+      _len = newLen;
     } else {
       if (opacity.value != 1) {
         opacity.parent = Tween<double>(begin: 1.0, end: 1.0)
             .animate(AnimationController(vsync: this, duration: Duration())..forward());
       }
     }
-    _len = newLen;
+    _oldContainLatestMessage = containLatestMessage;
+    _oldMessageIds
+      ..clear()
+      ..addAll(widget.messageIds);
   }
 }
