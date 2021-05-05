@@ -7,26 +7,27 @@ import 'base/item_positions_listener.dart';
 
 class ChatListView extends ScrollablePositionedList {
   const ChatListView.builder({
-    required this.messageIds,
-    required int itemCount,
-    required IndexedWidgetBuilder itemBuilder,
-    Key? key,
-    ItemScrollController? itemScrollController,
-    ItemPositionsListener? itemPositionsListener,
-    Axis scrollDirection = Axis.vertical,
-    bool reverse = false,
-    ScrollPhysics? physics,
-    int? semanticChildCount,
-    EdgeInsets? padding,
+    @required this.messageIds,
+    @required int itemCount,
+    @required IndexedWidgetBuilder itemBuilder,
+    Key key,
+    ItemScrollController itemScrollController,
+    ItemPositionsListener itemPositionsListener,
+    ScrollPhysics physics,
+    int semanticChildCount,
+    EdgeInsets padding,
     bool addSemanticIndexes = true,
     bool addAutomaticKeepAlives = true,
     bool addRepaintBoundaries = true,
-    double? minCacheExtent,
+    double minCacheExtent,
     this.onStartOfPage,
     this.onEndOfPage,
     this.onPageScrollStart,
     this.onPageScrollEnd,
-  }) : super.builder(
+  })  : assert(messageIds != null),
+        assert(itemCount != null),
+        assert(itemBuilder != null),
+        super.builder(
           key: key,
           itemCount: itemCount,
           itemBuilder: itemBuilder,
@@ -34,39 +35,40 @@ class ChatListView extends ScrollablePositionedList {
           itemPositionsListener: itemPositionsListener,
           initialScrollIndex: 0,
           initialAlignment: 0,
-          scrollDirection: scrollDirection,
-          reverse: reverse,
+          scrollDirection: Axis.vertical,
+          reverse: true,
           physics: physics,
           semanticChildCount: semanticChildCount,
           padding: padding,
           addSemanticIndexes: addSemanticIndexes,
           addAutomaticKeepAlives: addAutomaticKeepAlives,
           addRepaintBoundaries: addRepaintBoundaries,
-          minCacheExtent: minCacheExtent,
         );
 
   ChatListView.separated({
-    required this.messageIds,
-    required int itemCount,
-    required IndexedWidgetBuilder itemBuilder,
-    required IndexedWidgetBuilder? separatorBuilder,
-    Key? key,
-    ItemScrollController? itemScrollController,
-    ItemPositionsListener? itemPositionsListener,
-    Axis scrollDirection = Axis.vertical,
-    bool reverse = false,
-    ScrollPhysics? physics,
-    int? semanticChildCount,
-    EdgeInsets? padding,
+    @required this.messageIds,
+    @required int itemCount,
+    @required IndexedWidgetBuilder itemBuilder,
+    @required IndexedWidgetBuilder separatorBuilder,
+    Key key,
+    ItemScrollController itemScrollController,
+    ItemPositionsListener itemPositionsListener,
+    ScrollPhysics physics,
+    int semanticChildCount,
+    EdgeInsets padding,
     bool addSemanticIndexes = true,
     bool addAutomaticKeepAlives = true,
     bool addRepaintBoundaries = true,
-    double? minCacheExtent,
+    double minCacheExtent,
     this.onStartOfPage,
     this.onEndOfPage,
     this.onPageScrollStart,
     this.onPageScrollEnd,
-  }) : super.separated(
+  })  : assert(messageIds != null),
+        assert(itemCount != null),
+        assert(itemBuilder != null),
+        assert(separatorBuilder != null),
+        super.separated(
           key: key,
           itemCount: itemCount,
           itemBuilder: itemBuilder,
@@ -75,8 +77,8 @@ class ChatListView extends ScrollablePositionedList {
           itemPositionsListener: itemPositionsListener,
           initialScrollIndex: 0,
           initialAlignment: 0,
-          scrollDirection: scrollDirection,
-          reverse: reverse,
+          scrollDirection: Axis.vertical,
+          reverse: true,
           physics: physics,
           semanticChildCount: semanticChildCount,
           padding: padding,
@@ -90,16 +92,16 @@ class ChatListView extends ScrollablePositionedList {
   final List<String> messageIds;
 
   /// Called when the [child] reaches the start of the list
-  final AsyncCallback? onStartOfPage;
+  final AsyncCallback onStartOfPage;
 
   /// Called when the [child] reaches the end of the list
-  final AsyncCallback? onEndOfPage;
+  final AsyncCallback onEndOfPage;
 
   /// Called when the list scrolling starts
-  final VoidCallback? onPageScrollStart;
+  final VoidCallback onPageScrollStart;
 
   /// Called when the list scrolling ends
-  final VoidCallback? onPageScrollEnd;
+  final VoidCallback onPageScrollEnd;
 
   @override
   _ChatListViewState createState() => _ChatListViewState();
@@ -108,15 +110,15 @@ class ChatListView extends ScrollablePositionedList {
 class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
   bool _isUserScrolling = false;
   int _len = 0;
-  String? _oldFirstId;
-  VoidCallback? listener;
+  String _oldFirstId;
+  VoidCallback listener;
 
   @override
   void initState() {
-    widget.itemPositionsNotifier?.itemPositions.addListener(listener = () {
+    widget.itemPositionsNotifier?.itemPositions?.addListener(listener = () {
       setState(() {});
       if (listener != null) {
-        widget.itemPositionsNotifier?.itemPositions.removeListener(listener!);
+        widget.itemPositionsNotifier?.itemPositions?.removeListener(listener);
       }
     });
     WidgetsBinding.instance?.addPostFrameCallback((_) {
@@ -130,17 +132,14 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
     _updateIndexAndAlignment();
     return Listener(
       onPointerDown: (_) {
-        print('user touched');
         _isUserScrolling = true;
       },
       onPointerUp: (_) {
-        print('user cancel touch');
         _isUserScrolling = false;
       },
       child: NotificationListener<ScrollNotification>(
         onNotification: (scrollInfo) {
           if (scrollInfo is UserScrollNotification) {
-            print('user scroll: ${scrollInfo.direction}');
             _isUserScrolling = scrollInfo.direction != ScrollDirection.idle;
           }
           return false;
@@ -157,7 +156,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
   }
 
   void _updateIndexAndAlignment() {
-    print('_updateIndexAndAlignment');
     if (isTransitioning) return;
     final int newLen = widget.itemCount;
     final itemPositionsNotifier = widget.itemPositionsNotifier;
@@ -165,7 +163,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
       final positions = itemPositionsNotifier.itemPositions.value.toList()..sort((a, b) => (a.index - b.index));
       final first = positions.first;
       final last = positions.last;
-      print('_updateIndexAndAlignment positions: $positions');
       final bool hasFirst = positions.any((element) => element.index == 0);
       final bool hasLast =
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
@@ -179,7 +176,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
           }
         } else if (last.itemTrailingEdge == 1) {
           if (first.itemLeadingEdge < 0.3) {
-            print('_updateIndexAndAlignment: out of viewport');
             primary.alignment = 0;
             secondary.alignment = 0;
           }
@@ -199,7 +195,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
           final int diff = newLen - _len;
           final int frontDiff = widget.messageIds.indexOf(_oldFirstId ?? '');
           if (frontDiff > 0) {
-            print('_updateIndexAndAlignment diff: $diff');
             primary.target = primary.target + diff;
             secondary.target = secondary.target + diff;
           }
@@ -208,7 +203,6 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
         final int diff = newLen - _len;
         final int frontDiff = widget.messageIds.indexOf(_oldFirstId ?? '');
         if (frontDiff > 0) {
-          print('_updateIndexAndAlignment diff: $diff');
           primary.target = primary.target + diff;
           secondary.target = secondary.target + diff;
         }
@@ -225,6 +219,5 @@ class _ChatListViewState extends ScrollablePositionedListState<ChatListView> {
     }
     _oldFirstId = widget.messageIds.first;
     _len = newLen;
-    print('target: ${primary.target}, alignment: ${primary.alignment}');
   }
 }

@@ -9,29 +9,30 @@ class LazyLoadScrollView extends StatefulWidget {
   /// Creates a new instance of [LazyLoadScrollView]. The parameter [child]
   /// must be supplied and not null.
   const LazyLoadScrollView({
-    Key? key,
-    required this.child,
+    Key key,
+    @required this.child,
     this.onStartOfPage,
     this.onEndOfPage,
     this.onPageScrollStart,
     this.onPageScrollEnd,
     this.loadScrollOffset = 100,
-  }) : super(key: key);
+  })  : assert(child != null),
+        super(key: key);
 
   /// The [Widget] that this widget watches for changes on
   final Widget child;
 
   /// Called when the [child] reaches the start of the list
-  final AsyncCallback? onStartOfPage;
+  final AsyncCallback onStartOfPage;
 
   /// Called when the [child] reaches the end of the list
-  final AsyncCallback? onEndOfPage;
+  final AsyncCallback onEndOfPage;
 
   /// Called when the list scrolling starts
-  final VoidCallback? onPageScrollStart;
+  final VoidCallback onPageScrollStart;
 
   /// Called when the list scrolling ends
-  final VoidCallback? onPageScrollEnd;
+  final VoidCallback onPageScrollEnd;
 
   /// The offset to take into account when triggering [onEndOfPage]/[onStartOfPage] in pixels
   final double loadScrollOffset;
@@ -101,7 +102,7 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
     if (_loadMoreStatus == _LoadingStatus.stable) {
       if (widget.onEndOfPage != null) {
         _loadMoreStatus = _LoadingStatus.loading;
-        widget.onEndOfPage!().whenComplete(() {
+        widget.onEndOfPage().whenComplete(() {
           _loadMoreStatus = _LoadingStatus.stable;
         });
       }
@@ -112,7 +113,7 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
     if (_loadMoreStatus == _LoadingStatus.stable) {
       if (widget.onStartOfPage != null) {
         _loadMoreStatus = _LoadingStatus.loading;
-        widget.onStartOfPage!().whenComplete(() {
+        widget.onStartOfPage().whenComplete(() {
           _loadMoreStatus = _LoadingStatus.stable;
         });
       }
