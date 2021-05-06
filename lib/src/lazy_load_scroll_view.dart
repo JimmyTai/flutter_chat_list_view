@@ -3,7 +3,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-enum _LoadingStatus { loading, stable }
+enum LoadingStatus { loading, stable }
+
+class LazyLoadScrollController {
+  LoadingStatus loadMoreStatus = LoadingStatus.stable;
+
+  LazyLoadScrollController();
+
+  void dispose() {}
+}
 
 /// Wrapper around a [Scrollable] which triggers [onEndOfPage]/[onStartOfPage] the Scrollable
 /// reaches to the start or end of the view extent.
@@ -13,6 +21,7 @@ class LazyLoadScrollView extends StatefulWidget {
   const LazyLoadScrollView({
     Key key,
     @required this.child,
+    this.controller,
     this.onStartOfPage,
     this.onEndOfPage,
     this.onPageScrollStart,
@@ -20,6 +29,8 @@ class LazyLoadScrollView extends StatefulWidget {
     this.loadScrollOffset = 100,
   })  : assert(child != null),
         super(key: key);
+
+  final LazyLoadScrollController controller;
 
   /// The [Widget] that this widget watches for changes on
   final Widget child;
@@ -44,14 +55,28 @@ class LazyLoadScrollView extends StatefulWidget {
 }
 
 class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
-  _LoadingStatus _loadMoreStatus = _LoadingStatus.stable;
+  LazyLoadScrollController _controller;
   double _scrollPosition = 0;
+
+  @override
+  void initState() {
+    _controller = widget.controller ?? LazyLoadScrollController();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) => NotificationListener<ScrollNotification>(
         onNotification: _onNotification,
         child: widget.child,
       );
+
+  @override
+  void dispose() {
+    if (widget.controller == null) {
+      _controller?.dispose();
+    }
+    super.dispose();
+  }
 
   bool _onNotification(ScrollNotification notification) {
     if (notification is ScrollStartNotification) {
@@ -92,22 +117,22 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
   }
 
   void _onEndOfPage() {
-    if (_loadMoreStatus == _LoadingStatus.stable) {
+    if (_controller.loadMoreStatus == LoadingStatus.stable) {
       if (widget.onEndOfPage != null) {
-        _loadMoreStatus = _LoadingStatus.loading;
+        _controller.loadMoreStatus = LoadingStatus.loading;
         widget.onEndOfPage().then((value) => _waitNextBuild()).whenComplete(() {
-          _loadMoreStatus = _LoadingStatus.stable;
+          _controller.loadMoreStatus = LoadingStatus.stable;
         });
       }
     }
   }
 
   void _onStartOfPage() {
-    if (_loadMoreStatus == _LoadingStatus.stable) {
+    if (_controller.loadMoreStatus == LoadingStatus.stable) {
       if (widget.onStartOfPage != null) {
-        _loadMoreStatus = _LoadingStatus.loading;
+        _controller.loadMoreStatus = LoadingStatus.loading;
         widget.onStartOfPage().then((value) => _waitNextBuild()).whenComplete(() {
-          _loadMoreStatus = _LoadingStatus.stable;
+          _controller.loadMoreStatus = LoadingStatus.stable;
         });
       }
     }

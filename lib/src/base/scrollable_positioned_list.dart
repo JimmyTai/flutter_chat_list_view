@@ -31,34 +31,8 @@ const int _screenScrollCount = 2;
 ///
 /// All other parameters are the same as specified in [ListView].
 class ScrollablePositionedList extends StatefulWidget {
-  /// Create a [ScrollablePositionedList] whose items are provided by
-  /// [itemBuilder].
-  const ScrollablePositionedList.builder({
-    @required this.itemCount,
-    @required this.itemBuilder,
-    Key key,
-    this.itemScrollController,
-    ItemPositionsListener itemPositionsListener,
-    this.initialScrollIndex = 0,
-    this.initialAlignment = 0,
-    this.scrollDirection = Axis.vertical,
-    this.reverse = false,
-    this.physics,
-    this.semanticChildCount,
-    this.padding,
-    this.addSemanticIndexes = true,
-    this.addAutomaticKeepAlives = true,
-    this.addRepaintBoundaries = true,
-    this.minCacheExtent,
-  })  : assert(itemCount != null),
-        assert(itemBuilder != null),
-        itemPositionsNotifier = itemPositionsListener,
-        separatorBuilder = null,
-        super(key: key);
 
-  /// Create a [ScrollablePositionedList] whose items are provided by
-  /// [itemBuilder] and separators provided by [separatorBuilder].
-  const ScrollablePositionedList.separated({
+  const ScrollablePositionedList({
     @required this.itemCount,
     @required this.itemBuilder,
     @required this.separatorBuilder,
