@@ -58,6 +58,9 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
   LazyLoadScrollController _controller;
   double _scrollPosition = 0;
 
+  int _lastTriggerOnStartPage = 0;
+  int _lastTriggerOnEndPage = 0;
+
   @override
   void initState() {
     _controller = widget.controller ?? LazyLoadScrollController();
@@ -117,9 +120,11 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
   }
 
   void _onEndOfPage() {
+    if (DateTime.now().millisecondsSinceEpoch - _lastTriggerOnEndPage < 1500) return;
     if (_controller.loadMoreStatus == LoadingStatus.stable) {
       if (widget.onEndOfPage != null) {
         _controller.loadMoreStatus = LoadingStatus.loading;
+        _lastTriggerOnEndPage = DateTime.now().millisecondsSinceEpoch;
         widget.onEndOfPage().then((value) => _waitNextBuild()).whenComplete(() {
           _controller.loadMoreStatus = LoadingStatus.stable;
         });
@@ -128,9 +133,11 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
   }
 
   void _onStartOfPage() {
+    if (DateTime.now().millisecondsSinceEpoch - _lastTriggerOnStartPage < 1500) return;
     if (_controller.loadMoreStatus == LoadingStatus.stable) {
       if (widget.onStartOfPage != null) {
         _controller.loadMoreStatus = LoadingStatus.loading;
+        _lastTriggerOnStartPage = DateTime.now().millisecondsSinceEpoch;
         widget.onStartOfPage().then((value) => _waitNextBuild()).whenComplete(() {
           _controller.loadMoreStatus = LoadingStatus.stable;
         });
