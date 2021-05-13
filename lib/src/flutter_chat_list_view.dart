@@ -7,12 +7,14 @@ import 'lazy_load_scroll_view.dart';
 import 'base/item_positions_listener.dart';
 import './base/scrollable_positioned_list.dart';
 
+typedef FirstLoadedBuilder = bool Function();
 typedef OnPageAtBottom = void Function(bool);
 typedef LatestMessageIdBuilder = String Function();
 
 class ChatListView extends StatefulWidget {
   const ChatListView.builder({
     Key key,
+    @required this.firstLoadedBuilder,
     @required this.latestMessageIdBuilder,
     @required this.messageIds,
     @required this.itemCount,
@@ -42,6 +44,7 @@ class ChatListView extends StatefulWidget {
 
   ChatListView.separated({
     Key key,
+    @required this.firstLoadedBuilder,
     @required this.latestMessageIdBuilder,
     @required this.messageIds,
     @required this.itemCount,
@@ -74,6 +77,8 @@ class ChatListView extends StatefulWidget {
 
   /// all the message Ids in your list, the latest message is from position 0
   final List<String> messageIds;
+
+  final FirstLoadedBuilder firstLoadedBuilder;
 
   final LatestMessageIdBuilder latestMessageIdBuilder;
 
@@ -180,10 +185,10 @@ class _ChatListViewState extends State<ChatListView> {
       onPageScrollEnd: widget.onPageScrollEnd,
       child: ExtendedScrollablePositionedList(
         key: widget.listViewKey,
+        firstLoadedBuilder: widget.firstLoadedBuilder,
         latestMessageIdBuilder: widget.latestMessageIdBuilder,
         messageIds: widget.messageIds,
         loadingMoreStatusBuilder: () {
-          print('ChatListView loading status: ${_lazyLoadController?.loadMoreStatus}');
           return _lazyLoadController?.loadMoreStatus == LoadingStatus.loading;
         },
         itemCount: widget.itemCount,

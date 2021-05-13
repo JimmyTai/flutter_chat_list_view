@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import './base/scrollable_positioned_list.dart';
 import 'base/item_positions_listener.dart';
 
+typedef FirstLoadedBuilder = bool Function();
 typedef LoadingMoreStatusBuilder = bool Function();
 typedef OnPageAtBottom = void Function(bool);
 typedef LatestMessageIdBuilder = String Function();
@@ -16,6 +17,7 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
     @required int itemCount,
     @required IndexedWidgetBuilder itemBuilder,
     @required IndexedWidgetBuilder separatorBuilder,
+    @required this.firstLoadedBuilder,
     Key key,
     int initialScrollIndex = 0,
     double initialAlignment = 0.0,
@@ -62,6 +64,8 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
 
   final LoadingMoreStatusBuilder loadingMoreStatusBuilder;
 
+  final FirstLoadedBuilder firstLoadedBuilder;
+
   final OnPageAtBottom onPageAtBottom;
 
   @override
@@ -77,6 +81,12 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
   bool _oldContainLatestMessage;
 
   VoidCallback _listener;
+
+  bool get isFirstLoaded {
+    print('firstLoadedBuilder: ${widget.firstLoadedBuilder?.call()}');
+    if (widget.firstLoadedBuilder == null) return true;
+    return widget.firstLoadedBuilder();
+  }
 
   bool get containLatestMessage {
     if (widget.latestMessageIdBuilder == null) return true;
@@ -131,6 +141,19 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
     super.dispose();
   }
 
+  @override
+  void jumpTo({int index, double alignment}) {
+    final itemPositionsNotifier = widget.itemPositionsNotifier;
+    if (itemPositionsNotifier != null && itemPositionsNotifier.itemPositions.value.isNotEmpty) {
+      final positions = itemPositionsNotifier.itemPositions.value.toList()..sort((a, b) => (a.index - b.index));
+      final bool hasFirst = positions.any((element) => element.index == 0);
+      final bool hasLast =
+          positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
+      if (hasFirst && hasLast) return;
+    }
+    super.jumpTo(index: index, alignment: alignment);
+  }
+
   void _onItemPositionsListener() {
     final itemPositionsNotifier = widget.itemPositionsNotifier;
     final bool isAtBottom = itemPositionsNotifier == null ||
@@ -175,9 +198,14 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
             secondary.alignment = 0;
           }
         }
+      } else if (!isFirstLoaded) {
+        primary.target = 0;
+        primary.alignment = 0;
+        secondary.target = 0;
+        secondary.alignment = 0;
       } else if (hasFirst && _oldContainLatestMessage && containLatestMessage) {
         if (!_isUserScrolling) {
-          if (first.itemLeadingEdge == 0) {
+          if (first.itemLeadingEdge == 0 || !primary.scrollController.hasClients) {
             primary.target = 0;
             primary.alignment = 0;
             secondary.target = 0;
