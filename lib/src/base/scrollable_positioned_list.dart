@@ -36,6 +36,7 @@ class ScrollablePositionedList extends StatefulWidget {
     @required this.itemCount,
     @required this.itemBuilder,
     @required this.separatorBuilder,
+    this.findChildIndexCallback,
     Key key,
     this.itemScrollController,
     ItemPositionsListener itemPositionsListener,
@@ -66,6 +67,8 @@ class ScrollablePositionedList extends StatefulWidget {
   /// Called to build separators for between each item in the list.
   /// Called with 0 <= index < itemCount - 1.
   final IndexedWidgetBuilder separatorBuilder;
+
+  final ChildIndexGetter findChildIndexCallback;
 
   /// Controller for jumping or scrolling to an item.
   final ItemScrollController itemScrollController;
@@ -321,6 +324,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
                     child: PositionedList(
                       itemBuilder: widget.itemBuilder,
                       separatorBuilder: widget.separatorBuilder,
+                      findChildIndexCallback: widget.findChildIndexCallback,
                       itemCount: widget.itemCount,
                       positionedIndex: primary.target,
                       controller: primary.scrollController,
@@ -339,7 +343,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
                   ),
                 ),
               ),
-              if (isTransitioning)
+              if (false)
                 PostMountCallback(
                   key: secondary.key,
                   callback: startAnimationCallback,

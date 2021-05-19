@@ -18,6 +18,7 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
     @required IndexedWidgetBuilder itemBuilder,
     @required IndexedWidgetBuilder separatorBuilder,
     @required this.firstLoadedBuilder,
+    this.findChildIndexCallback,
     Key key,
     int initialScrollIndex = 0,
     double initialAlignment = 0.0,
@@ -42,6 +43,7 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
           itemCount: itemCount,
           itemBuilder: itemBuilder,
           separatorBuilder: separatorBuilder,
+          findChildIndexCallback: findChildIndexCallback,
           itemScrollController: itemScrollController,
           itemPositionsListener: itemPositionsListener,
           initialScrollIndex: initialScrollIndex,
@@ -61,6 +63,8 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
   final List<String> messageIds;
 
   final LatestMessageIdBuilder latestMessageIdBuilder;
+
+  final ChildIndexGetter findChildIndexCallback;
 
   final LoadingMoreStatusBuilder loadingMoreStatusBuilder;
 

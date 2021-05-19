@@ -194,6 +194,10 @@ class _ChatListViewState extends State<ChatListView> {
         itemCount: widget.itemCount,
         itemBuilder: widget.itemBuilder,
         separatorBuilder: widget.separatorBuilder,
+        findChildIndexCallback: (key) {
+          final int index = widget.messageIds?.indexWhere((id) => key.toString().contains('$id')) ?? -1;
+          return index >= 0 ? index : null;
+        },
         initialScrollIndex: widget.initialScrollIndex,
         initialAlignment: widget.initialAlignment,
         itemScrollController: widget.itemScrollController,
