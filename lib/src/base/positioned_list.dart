@@ -157,7 +157,6 @@ class _PositionedListState extends State<PositionedList> {
 
   @override
   Widget build(BuildContext context) {
-    print('positionedIndex: ${widget.positionedIndex}, item count: ${widget.itemCount}');
     return RegistryWidget(
       elementNotifier: registeredElements,
       child: UnboundedCustomScrollView(
@@ -191,8 +190,6 @@ class _PositionedListState extends State<PositionedList> {
                           rawIndex = -(index * 2 - (2 * widget.positionedIndex)) - 2;
                         }
                       }
-                      print(
-                          'leading key: $key, index: $index, rawIndex: $rawIndex, ${_buildSeparatedListElement(2 * widget.positionedIndex - (rawIndex + 1)).key}');
                     }
                     return rawIndex;
                   },
@@ -218,8 +215,6 @@ class _PositionedListState extends State<PositionedList> {
                     if (index != null) {
                       rawIndex = (index * 2) - (2 * widget.positionedIndex);
                     }
-                    print(
-                        'center key: $key, index: $index, rawIndex: $rawIndex, ${_buildSeparatedListElement(rawIndex + 2 * widget.positionedIndex).key}');
                   }
                   return rawIndex;
                 },
@@ -252,8 +247,6 @@ class _PositionedListState extends State<PositionedList> {
                           rawIndex = (index * 2) - (2 * widget.positionedIndex);
                         }
                       }
-                      print(
-                          'trail key: $key, index: $index, rawIndex: $rawIndex, ${_buildSeparatedListElement(rawIndex + 2 * widget.positionedIndex + 1).key}');
                     }
                     return rawIndex;
                   },
@@ -270,9 +263,7 @@ class _PositionedListState extends State<PositionedList> {
 
   Widget _buildSeparatedListElement(int index) {
     if (index.isEven) {
-      final item = _buildItem(index ~/ 2);
-      print('buildItem: $index, key: ${item.key}');
-      return item;
+      return _buildItem(index ~/ 2);
     } else {
       return widget.separatorBuilder(context, index ~/ 2);
     }

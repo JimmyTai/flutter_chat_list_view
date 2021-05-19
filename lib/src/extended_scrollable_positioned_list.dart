@@ -87,7 +87,6 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
   VoidCallback _listener;
 
   bool get isFirstLoaded {
-    print('firstLoadedBuilder: ${widget.firstLoadedBuilder?.call()}');
     if (widget.firstLoadedBuilder == null) return true;
     return widget.firstLoadedBuilder();
   }
