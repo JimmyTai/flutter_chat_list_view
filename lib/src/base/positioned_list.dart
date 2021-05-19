@@ -157,7 +157,7 @@ class _PositionedListState extends State<PositionedList> {
 
   @override
   Widget build(BuildContext context) {
-    print('trailing list visibility: ${widget.positionedIndex >= 0 && widget.positionedIndex < widget.itemCount - 1}');
+    print('positionedIndex: ${widget.positionedIndex}, item count: ${widget.itemCount}');
     return RegistryWidget(
       elementNotifier: registeredElements,
       child: UnboundedCustomScrollView(
@@ -186,12 +186,13 @@ class _PositionedListState extends State<PositionedList> {
                       final int index = widget.findChildIndexCallback(key);
                       if (index != null) {
                         if (key.toString().contains('root')) {
-                          rawIndex = -(index * 2 - (2 * widget.positionedIndex)) - 2;
+                          rawIndex = -((index * 2) - (2 * widget.positionedIndex)) - 1;
                         } else {
-                          rawIndex = -(index * 2 - (2 * widget.positionedIndex)) - 1;
+                          rawIndex = -(index * 2 - (2 * widget.positionedIndex)) - 2;
                         }
                       }
-                      print('leading rawIndex: $rawIndex');
+                      print(
+                          'leading key: $key, index: $index, rawIndex: $rawIndex, ${_buildSeparatedListElement(2 * widget.positionedIndex - (rawIndex + 1)).key}');
                     }
                     return rawIndex;
                   },
@@ -217,7 +218,8 @@ class _PositionedListState extends State<PositionedList> {
                     if (index != null) {
                       rawIndex = (index * 2) - (2 * widget.positionedIndex);
                     }
-                    print('center rawIndex: $rawIndex');
+                    print(
+                        'center key: $key, index: $index, rawIndex: $rawIndex, ${_buildSeparatedListElement(rawIndex + 2 * widget.positionedIndex).key}');
                   }
                   return rawIndex;
                 },
@@ -247,10 +249,11 @@ class _PositionedListState extends State<PositionedList> {
                         if (key.toString().contains('root')) {
                           rawIndex = (index * 2) - (2 * widget.positionedIndex) - 1;
                         } else {
-                          rawIndex = (index * 2) - (2 * widget.positionedIndex) - 2;
+                          rawIndex = (index * 2) - (2 * widget.positionedIndex);
                         }
-                        print('trail rawIndex: $rawIndex, ${_buildSeparatedListElement(rawIndex).key}');
                       }
+                      print(
+                          'trail key: $key, index: $index, rawIndex: $rawIndex, ${_buildSeparatedListElement(rawIndex + 2 * widget.positionedIndex + 1).key}');
                     }
                     return rawIndex;
                   },
