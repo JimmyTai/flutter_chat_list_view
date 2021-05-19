@@ -282,7 +282,7 @@ class _PositionedListState extends State<PositionedList> {
     return Container(
       key: widget.itemBuilder(context, index)?.key,
       child: RegisteredElementWidget(
-        key: ValueKey(index),
+        key: widget.itemBuilder(context, index)?.key,
         child: widget.addSemanticIndexes
             ? IndexedSemantics(index: index, child: widget.itemBuilder(context, index))
             : widget.itemBuilder(context, index),
@@ -342,19 +342,22 @@ class _PositionedListState extends State<PositionedList> {
         for (var element in registeredElements.value) {
           final RenderBox box = element.renderObject;
           viewport ??= RenderAbstractViewport.of(box);
-          final ValueKey<int> key = element.widget.key;
+          final ValueKey<String> key = element.widget.key;
+          final int index = widget.findChildIndexCallback(key) ?? 0;
           if (widget.scrollDirection == Axis.vertical) {
             final reveal = viewport.getOffsetToReveal(box, 0).offset;
             final itemOffset = reveal - viewport.offset.pixels + viewport.anchor * viewport.size.height;
             positions.add(ItemPosition(
-                index: key.value,
+                // index: key.value,
+                index: index,
                 itemLeadingEdge: itemOffset.round() / scrollController.position.viewportDimension,
                 itemTrailingEdge:
                     (itemOffset + box.size.height).round() / scrollController.position.viewportDimension));
           } else {
             final itemOffset = box.localToGlobal(Offset.zero, ancestor: viewport).dx;
             positions.add(ItemPosition(
-                index: key.value,
+                // index: key.value,
+                index: index,
                 itemLeadingEdge: (widget.reverse
                             ? scrollController.position.viewportDimension - (itemOffset + box.size.width)
                             : itemOffset)
