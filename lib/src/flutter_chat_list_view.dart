@@ -19,6 +19,8 @@ class ChatListView extends StatefulWidget {
     @required this.messageIds,
     @required this.itemCount,
     @required this.itemBuilder,
+    @required this.itemKeyPrefix,
+    @required this.separatorKeyPrefix,
     this.listViewKey,
     this.initialScrollIndex = 0,
     this.initialAlignment = 0.0,
@@ -50,6 +52,8 @@ class ChatListView extends StatefulWidget {
     @required this.itemCount,
     @required this.itemBuilder,
     @required this.separatorBuilder,
+    @required this.itemKeyPrefix,
+    @required this.separatorKeyPrefix,
     this.listViewKey,
     this.initialScrollIndex = 0,
     this.initialAlignment = 0.0,
@@ -74,6 +78,10 @@ class ChatListView extends StatefulWidget {
         super(key: key);
 
   final Key listViewKey;
+
+  final String itemKeyPrefix;
+
+  final String separatorKeyPrefix;
 
   /// all the message Ids in your list, the latest message is from position 0
   final List<String> messageIds;
@@ -195,8 +203,13 @@ class _ChatListViewState extends State<ChatListView> {
         itemBuilder: widget.itemBuilder,
         separatorBuilder: widget.separatorBuilder,
         findChildIndexCallback: (key) {
-          final int index = widget.messageIds?.indexWhere((id) => key.toString().contains('$id')) ?? -1;
-          return index >= 0 ? index : null;
+          if (key is ValueKey) {
+            final String parsedKey =
+                (key.value as String).replaceAll(widget.itemKeyPrefix, '').replaceAll(widget.separatorKeyPrefix, '');
+            final int index = widget.messageIds?.indexWhere((id) => parsedKey == '$id') ?? -1;
+            return (index >= 0 && index < widget.itemCount) ? index : null;
+          }
+          return null;
         },
         initialScrollIndex: widget.initialScrollIndex,
         initialAlignment: widget.initialAlignment,
