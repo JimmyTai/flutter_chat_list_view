@@ -343,7 +343,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
                   ),
                 ),
               ),
-              if (false)
+              if (isTransitioning)
                 PostMountCallback(
                   key: secondary.key,
                   callback: startAnimationCallback,
