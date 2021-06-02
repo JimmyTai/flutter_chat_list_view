@@ -120,7 +120,7 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
   }
 
   void _onEndOfPage() {
-    if (DateTime.now().millisecondsSinceEpoch - _lastTriggerOnEndPage < 1500) return;
+    if (DateTime.now().millisecondsSinceEpoch - _lastTriggerOnEndPage < 1000) return;
     if (_controller.loadMoreStatus == LoadingStatus.stable) {
       if (widget.onEndOfPage != null) {
         _controller.loadMoreStatus = LoadingStatus.loading;
@@ -133,7 +133,7 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
   }
 
   void _onStartOfPage() {
-    if (DateTime.now().millisecondsSinceEpoch - _lastTriggerOnStartPage < 1500) return;
+    if (DateTime.now().millisecondsSinceEpoch - _lastTriggerOnStartPage < 1000) return;
     if (_controller.loadMoreStatus == LoadingStatus.stable) {
       if (widget.onStartOfPage != null) {
         _controller.loadMoreStatus = LoadingStatus.loading;
@@ -147,7 +147,7 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
 
   Future<void> _waitNextBuild() async {
     final Completer completer = Completer();
-    await Future.delayed(Duration(milliseconds: 1000));
+    await Future.delayed(Duration(milliseconds: 500));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       completer.complete();
     });

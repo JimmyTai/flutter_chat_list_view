@@ -157,6 +157,8 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
     super.jumpTo(index: index, alignment: alignment);
   }
 
+  int _lastCallOnPageAtBottom = 0;
+
   void _onItemPositionsListener() {
     final itemPositionsNotifier = widget.itemPositionsNotifier;
     final bool isAtBottom = itemPositionsNotifier == null ||
@@ -164,8 +166,9 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
             itemPositionsNotifier != null &&
             itemPositionsNotifier.itemPositions.value.isNotEmpty &&
             itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0));
-    if (isAtBottom != _isAtBottom) {
+    if (isAtBottom != _isAtBottom || (DateTime.now().millisecondsSinceEpoch - _lastCallOnPageAtBottom > 500)) {
       widget.onPageAtBottom?.call(isAtBottom);
+      _lastCallOnPageAtBottom = DateTime.now().millisecondsSinceEpoch;
     }
     _isAtBottom = isAtBottom;
   }
