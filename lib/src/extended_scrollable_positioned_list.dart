@@ -108,7 +108,9 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
         (widget.initialScrollIndex == 0 && widget.initialAlignment == 0) ? true : containLatestMessage;
     widget.itemPositionsNotifier?.itemPositions?.addListener(_onItemPositionsListener);
     widget.itemPositionsNotifier?.itemPositions?.addListener(_listener = () {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
       if (_listener != null) {
         widget.itemPositionsNotifier?.itemPositions?.removeListener(_listener);
       }
