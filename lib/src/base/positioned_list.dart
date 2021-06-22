@@ -173,6 +173,7 @@ class _PositionedListState extends State<PositionedList> {
             SliverPadding(
               padding: _leadingSliverPadding,
               sliver: SliverList(
+                key: ValueKey('leading_sliver_list'),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) => widget.separatorBuilder == null
                       ? _buildItem(widget.positionedIndex - (index + 1))
@@ -225,6 +226,7 @@ class _PositionedListState extends State<PositionedList> {
           ),
           if (widget.positionedIndex >= 0 && widget.positionedIndex < widget.itemCount - 1)
             SliverPadding(
+              key: ValueKey('trailing_sliver_list'),
               padding: _trailingSliverPadding,
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
