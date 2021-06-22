@@ -148,9 +148,9 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
 
   @override
   void jumpTo({int index, double alignment}) {
-    final itemPositionsNotifier = widget.itemPositionsNotifier;
-    if (itemPositionsNotifier != null && itemPositionsNotifier.itemPositions.value.isNotEmpty) {
-      final positions = itemPositionsNotifier.itemPositions.value.toList()..sort((a, b) => (a.index - b.index));
+    final itemPositions = widget.itemPositionsNotifier?.itemPositions?.value;
+    if (itemPositions != null && itemPositions.isNotEmpty) {
+      final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
       final bool hasFirst = positions.any((element) => element.index == 0);
       final bool hasLast =
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
@@ -179,9 +179,9 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
     if (widget.messageIds == null || widget.messageIds.length == 0) return;
     if (isTransitioning) return;
     final int newLen = widget.itemCount;
-    final itemPositionsNotifier = widget.itemPositionsNotifier;
-    if (itemPositionsNotifier != null && itemPositionsNotifier.itemPositions.value.isNotEmpty) {
-      final positions = itemPositionsNotifier.itemPositions.value.toList()..sort((a, b) => (a.index - b.index));
+    final itemPositions = widget.itemPositionsNotifier?.itemPositions?.value;
+    if (itemPositions != null && itemPositions.isNotEmpty) {
+      final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
       final first = positions.first;
       final last = positions.last;
       final bool hasFirst = positions.any((element) => element.index == 0);

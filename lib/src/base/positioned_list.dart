@@ -331,37 +331,47 @@ class _PositionedListState extends State<PositionedList> {
         final positions = <ItemPosition>[];
         RenderViewport viewport;
         for (var element in registeredElements.value) {
-          final RenderBox box = element.renderObject;
-          viewport ??= RenderAbstractViewport.of(box);
-          final ValueKey<String> key = element.widget.key;
-          int index = 0;
-          if (widget.findChildIndexCallback != null) {
-            index = widget.findChildIndexCallback(key) ?? 0;
-          }
-          if (widget.scrollDirection == Axis.vertical) {
-            final reveal = viewport.getOffsetToReveal(box, 0).offset;
-            final itemOffset = reveal - viewport.offset.pixels + viewport.anchor * viewport.size.height;
-            positions.add(ItemPosition(
+          try {
+            final RenderBox box = element.renderObject;
+            if (box == null) continue;
+            viewport ??= RenderAbstractViewport.of(box);
+            if (viewport == null) continue;
+            final ValueKey<String> key = element.widget.key;
+            int index = 0;
+            if (widget.findChildIndexCallback != null) {
+              index = widget.findChildIndexCallback(key) ?? 0;
+            }
+            if (widget.scrollDirection == Axis.vertical) {
+              final reveal = viewport
+                  .getOffsetToReveal(box, 0)
+                  .offset;
+              final itemOffset = reveal - viewport.offset.pixels + viewport.anchor * viewport.size.height;
+              positions.add(ItemPosition(
                 // index: key.value,
-                index: index,
-                itemLeadingEdge: itemOffset.round() / scrollController.position.viewportDimension,
-                itemTrailingEdge:
-                    (itemOffset + box.size.height).round() / scrollController.position.viewportDimension));
-          } else {
-            final itemOffset = box.localToGlobal(Offset.zero, ancestor: viewport).dx;
-            positions.add(ItemPosition(
+                  index: index,
+                  itemLeadingEdge: itemOffset.round() / scrollController.position.viewportDimension,
+                  itemTrailingEdge:
+                  (itemOffset + box.size.height).round() / scrollController.position.viewportDimension));
+            } else {
+              final itemOffset = box
+                  .localToGlobal(Offset.zero, ancestor: viewport)
+                  .dx;
+              positions.add(ItemPosition(
                 // index: key.value,
-                index: index,
-                itemLeadingEdge: (widget.reverse
-                            ? scrollController.position.viewportDimension - (itemOffset + box.size.width)
-                            : itemOffset)
-                        .round() /
-                    scrollController.position.viewportDimension,
-                itemTrailingEdge: (widget.reverse
-                            ? scrollController.position.viewportDimension - itemOffset
-                            : (itemOffset + box.size.width))
-                        .round() /
-                    scrollController.position.viewportDimension));
+                  index: index,
+                  itemLeadingEdge: (widget.reverse
+                      ? scrollController.position.viewportDimension - (itemOffset + box.size.width)
+                      : itemOffset)
+                      .round() /
+                      scrollController.position.viewportDimension,
+                  itemTrailingEdge: (widget.reverse
+                      ? scrollController.position.viewportDimension - itemOffset
+                      : (itemOffset + box.size.width))
+                      .round() /
+                      scrollController.position.viewportDimension));
+            }
+          } catch (e) {
+            print('[ChatListView] PositionedList _schedulePositionNotificationUpdate with error: $e');
           }
         }
         widget.itemPositionsNotifier?.itemPositions?.value = positions;
