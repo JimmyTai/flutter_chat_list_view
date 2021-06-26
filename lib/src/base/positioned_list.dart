@@ -271,9 +271,9 @@ class _PositionedListState extends State<PositionedList> {
 
   Widget _buildItem(int index) {
     return Container(
-      key: widget.itemBuilder(context, index)?.key,
+      key: widget.itemBuilder(context, index).key,
       child: RegisteredElementWidget(
-        key: widget.itemBuilder(context, index)?.key,
+        key: widget.itemBuilder(context, index).key,
         child: widget.addSemanticIndexes
             ? IndexedSemantics(index: index, child: widget.itemBuilder(context, index))
             : widget.itemBuilder(context, index),

@@ -274,7 +274,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
 
   @override
   void didUpdateWidget(ScrollablePositionedList oldWidget) {
-    super.didUpdateWidget(oldWidget as T*);
+    super.didUpdateWidget(oldWidget as T);
     if (oldWidget.itemScrollController?._scrollableListState == this) {
       oldWidget.itemScrollController?._detach();
     }

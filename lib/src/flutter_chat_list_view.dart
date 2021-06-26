@@ -206,8 +206,12 @@ class _ChatListViewState extends State<ChatListView> {
           if (key is ValueKey) {
             final String parsedKey =
                 (key.value as String).replaceAll(widget.itemKeyPrefix, '').replaceAll(widget.separatorKeyPrefix, '');
-            final int index = widget.messageIds?.indexWhere((id) => parsedKey == '$id') ?? -1;
-            return (index >= 0 && index < widget.itemCount) ? index : null;
+            if (widget.messageIds != null) {
+              final int index = widget.messageIds.indexWhere((id) => parsedKey == '$id');
+              return (index >= 0 && index < widget.itemCount) ? index : null;
+            } else {
+              return -1;
+            }
           }
           return null;
         },
