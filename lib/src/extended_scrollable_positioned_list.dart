@@ -11,26 +11,26 @@ typedef LatestMessageIdBuilder = String Function();
 
 class ExtendedScrollablePositionedList extends ScrollablePositionedList {
   ExtendedScrollablePositionedList({
-    @required this.latestMessageIdBuilder,
-    @required this.messageIds,
-    @required this.loadingMoreStatusBuilder,
-    @required int itemCount,
-    @required IndexedWidgetBuilder itemBuilder,
-    @required IndexedWidgetBuilder separatorBuilder,
-    @required this.firstLoadedBuilder,
+    required this.latestMessageIdBuilder,
+    required this.messageIds,
+    required this.loadingMoreStatusBuilder,
+    required int itemCount,
+    required IndexedWidgetBuilder itemBuilder,
+    required IndexedWidgetBuilder separatorBuilder,
+    required this.firstLoadedBuilder,
     this.findChildIndexCallback,
-    Key key,
+    Key? key,
     int initialScrollIndex = 0,
     double initialAlignment = 0.0,
-    ItemScrollController itemScrollController,
-    ItemPositionsListener itemPositionsListener,
-    ScrollPhysics physics,
-    int semanticChildCount,
-    EdgeInsets padding,
+    ItemScrollController? itemScrollController,
+    ItemPositionsListener? itemPositionsListener,
+    ScrollPhysics? physics,
+    int? semanticChildCount,
+    EdgeInsets? padding,
     bool addSemanticIndexes = true,
     bool addAutomaticKeepAlives = true,
     bool addRepaintBoundaries = true,
-    double minCacheExtent,
+    double? minCacheExtent,
     this.onPageAtBottom,
   })  : assert(latestMessageIdBuilder != null),
         assert(messageIds != null),
@@ -64,13 +64,13 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
 
   final LatestMessageIdBuilder latestMessageIdBuilder;
 
-  final ChildIndexGetter findChildIndexCallback;
+  final ChildIndexGetter? findChildIndexCallback;
 
   final LoadingMoreStatusBuilder loadingMoreStatusBuilder;
 
   final FirstLoadedBuilder firstLoadedBuilder;
 
-  final OnPageAtBottom onPageAtBottom;
+  final OnPageAtBottom? onPageAtBottom;
 
   @override
   _ExtendedScrollablePositionedListState createState() => _ExtendedScrollablePositionedListState();
@@ -79,12 +79,12 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
 class _ExtendedScrollablePositionedListState extends ScrollablePositionedListState<ExtendedScrollablePositionedList> {
   bool _isUserScrolling = false;
   int _len = 0;
-  String _oldLastId;
+  String? _oldLastId;
   List<String> _oldMessageIds = [];
-  bool _isAtBottom;
-  bool _oldContainLatestMessage;
+  bool? _isAtBottom;
+  late bool _oldContainLatestMessage;
 
-  VoidCallback _listener;
+  VoidCallback? _listener;
 
   bool get isFirstLoaded {
     if (widget.firstLoadedBuilder == null) return true;
@@ -112,7 +112,7 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
         setState(() {});
       }
       if (_listener != null) {
-        widget.itemPositionsNotifier?.itemPositions?.removeListener(_listener);
+        widget.itemPositionsNotifier?.itemPositions?.removeListener(_listener!);
       }
     });
     super.initState();
@@ -147,7 +147,7 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
   }
 
   @override
-  void jumpTo({int index, double alignment}) {
+  void jumpTo({int? index, double? alignment}) {
     final itemPositions = widget.itemPositionsNotifier?.itemPositions?.value;
     if (itemPositions != null && itemPositions.isNotEmpty) {
       final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
@@ -156,7 +156,7 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
       if (hasFirst && hasLast) return;
     }
-    super.jumpTo(index: index, alignment: alignment);
+    super.jumpTo(index: index!, alignment: alignment);
   }
 
   int _lastCallOnPageAtBottom = 0;
