@@ -281,24 +281,6 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
       widget.itemScrollController?._detach();
       widget.itemScrollController?._attach(this);
     }
-
-    if (widget.itemCount == 0) {
-      setState(() {
-        primary.target = 0;
-        secondary.target = 0;
-      });
-    } else {
-      if (primary.target > widget.itemCount - 1) {
-        setState(() {
-          primary.target = widget.itemCount - 1;
-        });
-      }
-      if (secondary.target > widget.itemCount - 1) {
-        setState(() {
-          secondary.target = widget.itemCount - 1;
-        });
-      }
-    }
   }
 
   @override
