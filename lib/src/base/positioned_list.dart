@@ -46,8 +46,8 @@ class PositionedList extends StatefulWidget {
     this.addRepaintBoundaries = true,
     this.addAutomaticKeepAlives = true,
   })  : assert(itemCount != null),
-        assert(itemBuilder != null),
-        assert((positionedIndex == 0) || (positionedIndex < itemCount));
+        assert(itemBuilder != null);
+  // assert((positionedIndex == 0) || (positionedIndex < itemCount));
 
   /// Number of items the [itemBuilder] can produce.
   final int itemCount;
@@ -133,7 +133,7 @@ class _PositionedListState extends State<PositionedList> {
   final Key _centerKey = UniqueKey();
 
   final registeredElements = ValueNotifier<Set<Element>?>(null);
-  ScrollController? scrollController;
+  late ScrollController scrollController;
 
   bool updateScheduled = false;
 
@@ -141,13 +141,13 @@ class _PositionedListState extends State<PositionedList> {
   void initState() {
     super.initState();
     scrollController = widget.controller ?? ScrollController();
-    scrollController!.addListener(_schedulePositionNotificationUpdate);
+    scrollController.addListener(_schedulePositionNotificationUpdate);
     _schedulePositionNotificationUpdate();
   }
 
   @override
   void dispose() {
-    scrollController!.removeListener(_schedulePositionNotificationUpdate);
+    scrollController.removeListener(_schedulePositionNotificationUpdate);
     super.dispose();
   }
 
@@ -172,6 +172,7 @@ class _PositionedListState extends State<PositionedList> {
         controller: scrollController,
         scrollDirection: widget.scrollDirection,
         reverse: widget.reverse,
+        // shrinkWrap: true,
         cacheExtent: widget.cacheExtent,
         physics: widget.physics,
         semanticChildCount: widget.semanticChildCount ?? widget.itemCount,
@@ -188,6 +189,7 @@ class _PositionedListState extends State<PositionedList> {
                   childCount: widget.separatorBuilder == null ? widget.positionedIndex : 2 * widget.positionedIndex,
                   findChildIndexCallback: (key) {
                     int? rawIndex;
+
                     if (widget.findChildIndexCallback != null) {
                       final int? index = widget.findChildIndexCallback!(key);
                       if (index != null) {
@@ -284,7 +286,7 @@ class _PositionedListState extends State<PositionedList> {
       key: widget.itemBuilder(context, index).key,
       child: RegisteredElementWidget(
         index: index,
-        key: widget.itemBuilder(context, index)?.key,
+        key: widget.itemBuilder(context, index).key,
         child: widget.addSemanticIndexes
             ? IndexedSemantics(index: index, child: widget.itemBuilder(context, index))
             : widget.itemBuilder(context, index),
@@ -340,27 +342,30 @@ class _PositionedListState extends State<PositionedList> {
           return;
         }
         final positions = <ItemPosition>[];
-        RenderViewport? viewport;
+        RenderViewportBase? viewport;
         for (var element in registeredElements.value!) {
           try {
             final RenderBox? box = element.renderObject as RenderBox?;
             if (box == null) continue;
             if (!box.attached) continue;
-            viewport ??= RenderAbstractViewport.of(box);
+            // RenderViewportBase viewport2;
+            // viewport2.getOffsetToReveal(target, alignment)
+            viewport ??= RenderAbstractViewport.of(box) as RenderViewportBase;
             if (viewport == null) continue;
-            final ValueKey<String> key = element.widget.key;
-            int index;
+            int? index;
             if (element is RegisteredElement) {
               index = element.index;
             }
             if (index == null) continue;
-            if (widget.scrollDirection == Axis.vertical) {
+            if (widget.scrollDirection == Axis.vertical && viewport is RenderViewport) {
               final reveal = viewport.getOffsetToReveal(box, 0).offset;
               final itemOffset = reveal - viewport.offset.pixels + viewport.anchor * viewport.size.height;
               positions.add(ItemPosition(
                   // index: key.value,
                   index: index,
-                  itemLeadingEdge: itemOffset.round() / scrollController!.position.viewportDimension,
+                  itemOffset: reveal,
+                  itemSize: box.size.height,
+                  itemLeadingEdge: (itemOffset / scrollController.position.viewportDimension * 10).round() / 10,
                   itemTrailingEdge:
                       (itemOffset + box.size.height).round() / scrollController.position.viewportDimension));
             } else {
@@ -368,6 +373,8 @@ class _PositionedListState extends State<PositionedList> {
               positions.add(ItemPosition(
                   // index: key.value,
                   index: index,
+                  itemOffset: itemOffset,
+                  itemSize: box.size.width,
                   itemLeadingEdge: (widget.reverse
                               ? scrollController.position.viewportDimension - (itemOffset + box.size.width)
                               : itemOffset)
@@ -384,7 +391,7 @@ class _PositionedListState extends State<PositionedList> {
                 '[ChatListView] PositionedList _schedulePositionNotificationUpdate with error: $e, stackTrace: $stackTrace');
           }
         }
-        widget.itemPositionsNotifier?.itemPositions?.value = positions;
+        widget.itemPositionsNotifier?.itemPositions.value = positions;
         updateScheduled = false;
       });
     }

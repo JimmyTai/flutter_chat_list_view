@@ -175,9 +175,9 @@ class ItemScrollController {
   /// * 0 aligns the left edge of the item with the left edge of the view
   /// * 1 aligns the left edge of the item with the right edge of the view.
   /// * 0.5 aligns the left edge of the item with the center of the view.
-  void jumpTo({required int index, double alignment = 0}) {
+  void jumpTo({required int index, double alignment = 0, bool isOnlyFilledView = false}) {
     if (isAttached) {
-      _scrollableListState!.jumpTo(index: index, alignment: alignment);
+      _scrollableListState!.jumpTo(index: index, alignment: alignment, isOnlyFilledView: isOnlyFilledView);
     }
   }
 
@@ -364,10 +364,28 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
         widget.minCacheExtent ?? 0,
       );
 
-  void jumpTo({required int index, double? alignment}) {
+  bool get isItemFilledView {
+    try {
+      //final positions = widget.itemPositionListener.itemPositions.value;
+      final positions = widget.itemPositionsNotifier!.itemPositions.value;
+      final poslist = positions.toList()..sort((a, b) => (a.itemOffset - b.itemOffset).round());
+      final listHeight = primary.scrollController.position.viewportDimension;
+      if ((poslist.last.itemSize + poslist.last.itemOffset - poslist.first.itemOffset) > listHeight) {
+        return true;
+      }
+    }
+    // ignore: avoid_catches_without_on_clauses
+    catch (_) {}
+    return false;
+  }
+
+  void jumpTo({required int index, double? alignment, bool isOnlyFilledView = false}) {
     _stopScroll(canceled: true);
     if (index > widget.itemCount - 1) {
       index = widget.itemCount - 1;
+    }
+    if (isOnlyFilledView && !isItemFilledView) {
+      return;
     }
     setState(() {
       primary.scrollController.jumpTo(0);
@@ -503,7 +521,22 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
       PageStorage.of(context)!.writeState(context,
           itemPositions.reduce((value, element) => value.itemLeadingEdge < element.itemLeadingEdge ? value : element));
     }
-    widget.itemPositionsNotifier?.itemPositions?.value = itemPositions;
+    widget.itemPositionsNotifier?.itemPositions.value = itemPositions;
+    // check changes
+    // final lastValue = widget.itemPositionsNotifier!.itemPositions.value;
+    // bool isChanges = false;
+    // if (lastValue.length != itemPositions.length) {
+    //   isChanges = true;
+    // } else if (lastValue.isNotEmpty) {
+    //   final lastSet = lastValue.map((e) => e.index).toSet();
+    //   final itemsSet = itemPositions.map((e) => e.index).toSet();
+    //   if (lastSet.difference(itemsSet).isNotEmpty) {
+    //     isChanges = true;
+    //   }
+    // }
+    // if (isChanges) {
+    //   widget.itemPositionsNotifier?.itemPositions.value = itemPositions;
+    // }
   }
 }
 

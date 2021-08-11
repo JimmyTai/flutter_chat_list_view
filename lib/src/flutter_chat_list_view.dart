@@ -38,10 +38,7 @@ class ChatListView extends StatefulWidget {
     this.onPageScrollStart,
     this.onPageScrollEnd,
     this.onPageAtBottom,
-  })  : assert(messageIds != null),
-        assert(itemCount != null),
-        assert(itemBuilder != null),
-        separatorBuilder = null,
+  })  : separatorBuilder = null,
         super(key: key);
 
   ChatListView.separated({
@@ -71,10 +68,7 @@ class ChatListView extends StatefulWidget {
     this.onPageScrollStart,
     this.onPageScrollEnd,
     this.onPageAtBottom,
-  })  : assert(messageIds != null),
-        assert(itemCount != null),
-        assert(itemBuilder != null),
-        assert(separatorBuilder != null),
+  })  : assert(separatorBuilder != null),
         super(key: key);
 
   final Key? listViewKey;
@@ -175,19 +169,18 @@ class ChatListView extends StatefulWidget {
 }
 
 class _ChatListViewState extends State<ChatListView> {
-  LazyLoadScrollController _lazyLoadController;
-  bool _isAtBottom;
+  late LazyLoadScrollController _lazyLoadController;
+  bool _isAtBottom = false;
 
   @override
   void initState() {
     _lazyLoadController = LazyLoadScrollController();
-    widget.itemPositionsListener?.itemPositions?.addListener(_onItemPositionsListener);
+    widget.itemPositionsListener?.itemPositions.addListener(_onItemPositionsListener);
     super.initState();
   }
 
   bool get containLatestMessage {
-    if (widget.latestMessageIdBuilder == null) return true;
-    if (widget.messageIds == null || widget.messageIds.length == 0) return true;
+    if (widget.messageIds.length == 0) return true;
     return widget.messageIds.contains(widget.latestMessageIdBuilder());
   }
 
@@ -197,7 +190,6 @@ class _ChatListViewState extends State<ChatListView> {
     final itemPositionsNotifier = widget.itemPositionsListener;
     final bool isAtBottom = itemPositionsNotifier == null ||
         (containLatestMessage &&
-            itemPositionsNotifier != null &&
             itemPositionsNotifier.itemPositions.value.isNotEmpty &&
             itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0));
     if (isAtBottom != _isAtBottom || (DateTime.now().millisecondsSinceEpoch - _lastCallOnPageAtBottom > 500)) {
@@ -221,21 +213,19 @@ class _ChatListViewState extends State<ChatListView> {
         latestMessageIdBuilder: widget.latestMessageIdBuilder,
         messageIds: widget.messageIds,
         loadingMoreStatusBuilder: () {
-          return _lazyLoadController?.loadMoreStatus == LoadingStatus.loading;
+          return _lazyLoadController.loadMoreStatus == LoadingStatus.loading;
         },
         itemCount: widget.itemCount,
         itemBuilder: widget.itemBuilder,
         separatorBuilder: widget.separatorBuilder!,
         findChildIndexCallback: (key) {
           if (!_isAtBottom) return null;
-          int index;
-          if (key != null && key is ValueKey && key.value is String) {
+          int? index;
+          if (key is ValueKey && key.value is String) {
             final String parsedKey =
                 (key.value as String).replaceAll(widget.itemKeyPrefix, '').replaceAll(widget.separatorKeyPrefix, '');
-            if (widget.messageIds != null) {
-              index = widget.messageIds.indexWhere((id) => parsedKey == '$id') ?? -1;
-              index = (index >= 0 && index < widget.itemCount) ? index : null;
-            }
+            index = widget.messageIds.indexWhere((id) => parsedKey == '$id');
+            index = (index >= 0 && index < widget.itemCount) ? index : null;
           }
           return index;
         },
@@ -257,8 +247,8 @@ class _ChatListViewState extends State<ChatListView> {
 
   @override
   void dispose() {
-    widget.itemPositionsListener?.itemPositions?.removeListener(_onItemPositionsListener);
-    _lazyLoadController?.dispose();
+    widget.itemPositionsListener?.itemPositions.removeListener(_onItemPositionsListener);
+    _lazyLoadController.dispose();
     super.dispose();
   }
 }

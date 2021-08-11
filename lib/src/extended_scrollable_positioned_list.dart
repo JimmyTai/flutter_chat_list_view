@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -32,13 +33,7 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
     bool addRepaintBoundaries = true,
     double? minCacheExtent,
     this.onPageAtBottom,
-  })  : assert(latestMessageIdBuilder != null),
-        assert(messageIds != null),
-        assert(loadingMoreStatusBuilder != null),
-        assert(itemCount != null),
-        assert(itemBuilder != null),
-        assert(separatorBuilder != null),
-        super(
+  }) : super(
           key: key,
           itemCount: itemCount,
           itemBuilder: itemBuilder,
@@ -82,8 +77,9 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
   String? _oldLastId;
   List<String> _oldMessageIds = [];
   bool _oldContainLatestMessage = false;
-
-  VoidCallback? _listener;
+  int primaryTarget = 0;
+  double primaryAlign = 0;
+  double _lastBottomPadding = 0;
 
   bool get isFirstLoaded {
     if (widget.firstLoadedBuilder == null) return true;
@@ -105,20 +101,33 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
       ..addAll(widget.messageIds);
     _oldContainLatestMessage =
         (widget.initialScrollIndex == 0 && widget.initialAlignment == 0) ? true : containLatestMessage;
-    widget.itemPositionsNotifier?.itemPositions?.addListener(_listener = () {
-      if (mounted) {
-        setState(() {});
-      }
-      if (_listener != null) {
-        widget.itemPositionsNotifier?.itemPositions?.removeListener(_listener!);
-      }
-    });
+    widget.itemPositionsNotifier?.itemPositions.addListener(_eventItemUpdated);
     super.initState();
+  }
+
+  void _eventItemUpdated() {
+    _updateIndexAndAlignment();
+    if (primaryAlign != primary.alignment || primary.target != primaryTarget) {
+      primaryAlign = primary.alignment ?? 0;
+      primaryTarget = primary.target;
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        setState(() {}); // update screen
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    _updateIndexAndAlignment();
+    final bottom = ui.window.viewInsets.bottom;
+    if (_lastBottomPadding != bottom) {
+      _lastBottomPadding = bottom;
+      _updateIndexAndAlignment(refresh: true);
+      primaryAlign = primary.alignment ?? 0;
+      primaryTarget = primary.target;
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        setState(() {}); // update screen
+      });
+    }
     return Listener(
       onPointerDown: (_) {
         _isUserScrolling = true;
@@ -140,12 +149,14 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
 
   @override
   void dispose() {
+    widget.itemPositionsNotifier?.itemPositions.removeListener(_eventItemUpdated);
+
     super.dispose();
   }
 
   @override
-  void jumpTo({int? index, double? alignment}) {
-    final itemPositions = widget.itemPositionsNotifier?.itemPositions?.value;
+  void jumpTo({int? index, double? alignment, bool isOnlyFilledView = false}) {
+    final itemPositions = widget.itemPositionsNotifier?.itemPositions.value;
     if (itemPositions != null && itemPositions.isNotEmpty) {
       final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
       final bool hasFirst = positions.any((element) => element.index == 0);
@@ -153,29 +164,32 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
       if (hasFirst && hasLast) return;
     }
-    super.jumpTo(index: index!, alignment: alignment);
+    super.jumpTo(index: index!, alignment: alignment, isOnlyFilledView: isOnlyFilledView);
   }
 
-  void _updateIndexAndAlignment() {
-    if (widget.messageIds == null || widget.messageIds.length == 0) return;
+  void _updateIndexAndAlignment({bool refresh = false}) {
+    if (widget.messageIds.isEmpty) return;
     if (isTransitioning) return;
     final int newLen = widget.itemCount;
-    final itemPositions = widget.itemPositionsNotifier?.itemPositions?.value;
+    final itemPositions = widget.itemPositionsNotifier?.itemPositions.value;
     if (itemPositions != null && itemPositions.isNotEmpty) {
       final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
       final first = positions.first;
       final last = positions.last;
       final bool hasFirst = positions.any((element) => element.index == 0);
-      final bool hasLast =
+      final bool hasLast = (widget.itemCount == positions.length) ||
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
+      final viewHeight =
+          primary.scrollController.hasClients ? primary.scrollController.position.viewportDimension : 600;
       if (hasFirst && hasLast) {
-        if (_len != widget.itemCount) {
+        if (_len != widget.itemCount || refresh) {
           primary.target = 0;
           secondary.target = 0;
-          if (first.itemLeadingEdge == 0 && last.itemTrailingEdge < 0.7) {
+
+          if (((last.itemOffset - first.itemOffset) < viewHeight) && last.itemTrailingEdge < 1) {
             if (last.itemTrailingEdge != 1) {
-              primary.alignment = 1 - last.itemTrailingEdge;
-              secondary.alignment = 1 - last.itemTrailingEdge;
+              primary.alignment = 1 - (last.itemOffset + last.itemSize) / viewHeight;
+              secondary.alignment = 1 - (last.itemOffset + last.itemSize) / viewHeight;
             }
           } else if (last.itemTrailingEdge == 1) {
             if (first.itemLeadingEdge < 0.3) {
@@ -200,7 +214,9 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
             secondary.target = 0;
             secondary.alignment = 0;
           } else {
-            jumpTo(index: 0, alignment: 0);
+            if (first.itemLeadingEdge > -(first.itemSize / viewHeight) * 0.3) {
+              jumpTo(index: 0, alignment: 0); // jump to 0, ensure first item in sight
+            }
           }
         } else {
           final int diff = newLen - _len;
