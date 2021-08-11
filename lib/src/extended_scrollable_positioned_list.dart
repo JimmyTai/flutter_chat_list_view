@@ -81,7 +81,7 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
   int _len = 0;
   String? _oldLastId;
   List<String> _oldMessageIds = [];
-  bool _oldContainLatestMessage;
+  bool _oldContainLatestMessage = false;
 
   VoidCallback? _listener;
 
