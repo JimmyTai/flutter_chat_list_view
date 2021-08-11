@@ -215,6 +215,9 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
             secondary.alignment = 0;
           } else {
             if (first.itemLeadingEdge > -(first.itemSize / viewHeight) * 0.3) {
+              // 滑動超過訊息的 1/3 就會跳離 保持在底部 狀態
+              // a. 新訊息在剛填滿畫面時，如果沒有剛好對齊最下方，就不會觸發'保持在底部'
+              // b. 長度訊息會滑動時會不距離不長會被拉回底部，例如客服發的公告，要滑動超過訊息的 1/3
               jumpTo(index: 0, alignment: 0); // jump to 0, ensure first item in sight
             }
           }
