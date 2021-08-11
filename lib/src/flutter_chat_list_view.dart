@@ -29,7 +29,7 @@ class ChatListView extends StatefulWidget {
     this.physics,
     this.semanticChildCount,
     this.padding,
-    this.addSemanticIndexes = true,
+    this.addSemanticIndexes = false,
     this.addAutomaticKeepAlives = true,
     this.addRepaintBoundaries = true,
     this.minCacheExtent,
@@ -175,12 +175,36 @@ class ChatListView extends StatefulWidget {
 }
 
 class _ChatListViewState extends State<ChatListView> {
-  LazyLoadScrollController? _lazyLoadController;
+  LazyLoadScrollController _lazyLoadController;
+  bool _isAtBottom;
 
   @override
   void initState() {
     _lazyLoadController = LazyLoadScrollController();
+    widget.itemPositionsListener?.itemPositions?.addListener(_onItemPositionsListener);
     super.initState();
+  }
+
+  bool get containLatestMessage {
+    if (widget.latestMessageIdBuilder == null) return true;
+    if (widget.messageIds == null || widget.messageIds.length == 0) return true;
+    return widget.messageIds.contains(widget.latestMessageIdBuilder());
+  }
+
+  int _lastCallOnPageAtBottom = 0;
+
+  void _onItemPositionsListener() {
+    final itemPositionsNotifier = widget.itemPositionsListener;
+    final bool isAtBottom = itemPositionsNotifier == null ||
+        (containLatestMessage &&
+            itemPositionsNotifier != null &&
+            itemPositionsNotifier.itemPositions.value.isNotEmpty &&
+            itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0));
+    if (isAtBottom != _isAtBottom || (DateTime.now().millisecondsSinceEpoch - _lastCallOnPageAtBottom > 500)) {
+      widget.onPageAtBottom?.call(isAtBottom);
+      _lastCallOnPageAtBottom = DateTime.now().millisecondsSinceEpoch;
+    }
+    _isAtBottom = isAtBottom;
   }
 
   @override
@@ -203,17 +227,17 @@ class _ChatListViewState extends State<ChatListView> {
         itemBuilder: widget.itemBuilder,
         separatorBuilder: widget.separatorBuilder!,
         findChildIndexCallback: (key) {
-          if (key is ValueKey) {
+          if (!_isAtBottom) return null;
+          int index;
+          if (key != null && key is ValueKey && key.value is String) {
             final String parsedKey =
                 (key.value as String).replaceAll(widget.itemKeyPrefix, '').replaceAll(widget.separatorKeyPrefix, '');
             if (widget.messageIds != null) {
-              final int index = widget.messageIds.indexWhere((id) => parsedKey == '$id');
-              return (index >= 0 && index < widget.itemCount) ? index : null;
-            } else {
-              return -1;
+              index = widget.messageIds.indexWhere((id) => parsedKey == '$id') ?? -1;
+              index = (index >= 0 && index < widget.itemCount) ? index : null;
             }
           }
-          return null;
+          return index;
         },
         initialScrollIndex: widget.initialScrollIndex,
         initialAlignment: widget.initialAlignment,
@@ -233,6 +257,7 @@ class _ChatListViewState extends State<ChatListView> {
 
   @override
   void dispose() {
+    widget.itemPositionsListener?.itemPositions?.removeListener(_onItemPositionsListener);
     _lazyLoadController?.dispose();
     super.dispose();
   }

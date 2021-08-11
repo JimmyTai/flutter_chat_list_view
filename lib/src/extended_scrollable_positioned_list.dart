@@ -81,8 +81,7 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
   int _len = 0;
   String? _oldLastId;
   List<String> _oldMessageIds = [];
-  bool? _isAtBottom;
-  late bool _oldContainLatestMessage;
+  bool _oldContainLatestMessage;
 
   VoidCallback? _listener;
 
@@ -106,7 +105,6 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
       ..addAll(widget.messageIds);
     _oldContainLatestMessage =
         (widget.initialScrollIndex == 0 && widget.initialAlignment == 0) ? true : containLatestMessage;
-    widget.itemPositionsNotifier?.itemPositions?.addListener(_onItemPositionsListener);
     widget.itemPositionsNotifier?.itemPositions?.addListener(_listener = () {
       if (mounted) {
         setState(() {});
@@ -142,7 +140,6 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
 
   @override
   void dispose() {
-    widget.itemPositionsNotifier?.itemPositions?.removeListener(_onItemPositionsListener);
     super.dispose();
   }
 
@@ -157,22 +154,6 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
       if (hasFirst && hasLast) return;
     }
     super.jumpTo(index: index!, alignment: alignment);
-  }
-
-  int _lastCallOnPageAtBottom = 0;
-
-  void _onItemPositionsListener() {
-    final itemPositionsNotifier = widget.itemPositionsNotifier;
-    final bool isAtBottom = itemPositionsNotifier == null ||
-        (containLatestMessage &&
-            itemPositionsNotifier != null &&
-            itemPositionsNotifier.itemPositions.value.isNotEmpty &&
-            itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0));
-    if (isAtBottom != _isAtBottom || (DateTime.now().millisecondsSinceEpoch - _lastCallOnPageAtBottom > 500)) {
-      widget.onPageAtBottom?.call(isAtBottom);
-      _lastCallOnPageAtBottom = DateTime.now().millisecondsSinceEpoch;
-    }
-    _isAtBottom = isAtBottom;
   }
 
   void _updateIndexAndAlignment() {
