@@ -101,12 +101,17 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
       ..addAll(widget.messageIds);
     _oldContainLatestMessage =
         (widget.initialScrollIndex == 0 && widget.initialAlignment == 0) ? true : containLatestMessage;
-    widget.itemPositionsNotifier?.itemPositions.addListener(_eventItemUpdated);
     super.initState();
   }
 
-  void _eventItemUpdated() {
-    _updateIndexAndAlignment();
+  @override
+  void onPositionsUpdated(Iterable<ItemPosition> itemPositions) {
+    _eventPositionsUpdated(itemPositions);
+    super.onPositionsUpdated(itemPositions);
+  }
+
+  void _eventPositionsUpdated(Iterable<ItemPosition> itemPositions) {
+    _updateIndexAndAlignment(itemPositions: itemPositions);
     if (primaryAlign != primary.alignment || primary.target != primaryTarget) {
       primaryAlign = primary.alignment ?? 0;
       primaryTarget = primary.target;
@@ -121,10 +126,10 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
     final bottom = ui.window.viewInsets.bottom;
     if (_lastBottomPadding != bottom) {
       _lastBottomPadding = bottom;
-      _updateIndexAndAlignment(refresh: true);
-      primaryAlign = primary.alignment ?? 0;
-      primaryTarget = primary.target;
       WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        _updateIndexAndAlignment(refresh: true);
+        primaryAlign = primary.alignment ?? 0;
+        primaryTarget = primary.target;
         setState(() {}); // update screen
       });
     }
@@ -149,8 +154,6 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
 
   @override
   void dispose() {
-    widget.itemPositionsNotifier?.itemPositions.removeListener(_eventItemUpdated);
-
     super.dispose();
   }
 
@@ -167,11 +170,11 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
     super.jumpTo(index: index!, alignment: alignment, isOnlyFilledView: isOnlyFilledView);
   }
 
-  void _updateIndexAndAlignment({bool refresh = false}) {
+  void _updateIndexAndAlignment({Iterable<ItemPosition>? itemPositions, bool refresh = false}) {
+    itemPositions ??= widget.itemPositionsNotifier?.itemPositions.value;
     if (widget.messageIds.isEmpty) return;
     if (isTransitioning) return;
     final int newLen = widget.itemCount;
-    final itemPositions = widget.itemPositionsNotifier?.itemPositions.value;
     if (itemPositions != null && itemPositions.isNotEmpty) {
       final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
       final first = positions.first;
@@ -213,11 +216,14 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
             primary.alignment = 0;
             secondary.target = 0;
             secondary.alignment = 0;
+            primary.scrollController.jumpTo(0);
           } else {
-            if (first.itemLeadingEdge > -(first.itemSize / viewHeight) * 0.3) {
-              // 滑動超過訊息的 1/3 就會跳離 保持在底部 狀態
+            final leadingPixel = first.itemLeadingEdge * viewHeight;
+            if (leadingPixel > -40 && leadingPixel < 20) {
+              // 40 文字訊息的一半高度
+              // 滑動超過訊息的 40 pixel 就會跳離 保持在底部 狀態
               // a. 新訊息在剛填滿畫面時，如果沒有剛好對齊最下方，就不會觸發'保持在底部'
-              // b. 長度訊息會滑動時會不距離不長會被拉回底部，例如客服發的公告，要滑動超過訊息的 1/3
+              // b. 滑動時不距離不夠會被拉回底部
               jumpTo(index: 0, alignment: 0); // jump to 0, ensure first item in sight
             }
           }

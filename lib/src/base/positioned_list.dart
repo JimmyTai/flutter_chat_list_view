@@ -45,6 +45,7 @@ class PositionedList extends StatefulWidget {
     this.addSemanticIndexes = true,
     this.addRepaintBoundaries = true,
     this.addAutomaticKeepAlives = true,
+    this.onPositionsUpdated,
   })  : assert(itemCount != null),
         assert(itemBuilder != null);
   // assert((positionedIndex == 0) || (positionedIndex < itemCount));
@@ -125,6 +126,8 @@ class PositionedList extends StatefulWidget {
   /// See [SliverChildBuilderDelegate.addAutomaticKeepAlives].
   final bool addAutomaticKeepAlives;
 
+  final void Function(Iterable<ItemPosition> positions)? onPositionsUpdated;
+
   @override
   State<StatefulWidget> createState() => _PositionedListState();
 }
@@ -164,6 +167,7 @@ class _PositionedListState extends State<PositionedList> {
     final int trailingItemCount = widget.separatorBuilder == null
         ? widget.itemCount - widget.positionedIndex - 1
         : 2 * (widget.itemCount - widget.positionedIndex - 1);
+
     return RegistryWidget(
       elementNotifier: registeredElements,
       child: UnboundedCustomScrollView(
@@ -392,6 +396,7 @@ class _PositionedListState extends State<PositionedList> {
           }
         }
         widget.itemPositionsNotifier?.itemPositions.value = positions;
+        widget.onPositionsUpdated?.call(positions);
         updateScheduled = false;
       });
     }

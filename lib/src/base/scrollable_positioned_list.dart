@@ -245,6 +245,8 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
 
   bool isTransitioning = false;
 
+  void onPositionsUpdated(Iterable<ItemPosition> itemPositions) {}
+
   @override
   void initState() {
     super.initState();
@@ -319,6 +321,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
                       padding: widget.padding,
                       addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
                       addRepaintBoundaries: widget.addRepaintBoundaries,
+                      onPositionsUpdated: onPositionsUpdated,
                     ),
                   ),
                 ),
@@ -522,21 +525,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
           itemPositions.reduce((value, element) => value.itemLeadingEdge < element.itemLeadingEdge ? value : element));
     }
     widget.itemPositionsNotifier?.itemPositions.value = itemPositions;
-    // check changes
-    // final lastValue = widget.itemPositionsNotifier!.itemPositions.value;
-    // bool isChanges = false;
-    // if (lastValue.length != itemPositions.length) {
-    //   isChanges = true;
-    // } else if (lastValue.isNotEmpty) {
-    //   final lastSet = lastValue.map((e) => e.index).toSet();
-    //   final itemsSet = itemPositions.map((e) => e.index).toSet();
-    //   if (lastSet.difference(itemsSet).isNotEmpty) {
-    //     isChanges = true;
-    //   }
-    // }
-    // if (isChanges) {
-    //   widget.itemPositionsNotifier?.itemPositions.value = itemPositions;
-    // }
+    onPositionsUpdated(itemPositions);
   }
 }
 
