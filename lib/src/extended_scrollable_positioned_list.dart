@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -11,34 +12,28 @@ typedef LatestMessageIdBuilder = String Function();
 
 class ExtendedScrollablePositionedList extends ScrollablePositionedList {
   ExtendedScrollablePositionedList({
-    @required this.latestMessageIdBuilder,
-    @required this.messageIds,
-    @required this.loadingMoreStatusBuilder,
-    @required int itemCount,
-    @required IndexedWidgetBuilder itemBuilder,
-    @required IndexedWidgetBuilder separatorBuilder,
-    @required this.firstLoadedBuilder,
+    required this.latestMessageIdBuilder,
+    required this.messageIds,
+    required this.loadingMoreStatusBuilder,
+    required int itemCount,
+    required IndexedWidgetBuilder itemBuilder,
+    required IndexedWidgetBuilder separatorBuilder,
+    required this.firstLoadedBuilder,
     this.findChildIndexCallback,
-    Key key,
+    Key? key,
     int initialScrollIndex = 0,
     double initialAlignment = 0.0,
-    ItemScrollController itemScrollController,
-    ItemPositionsListener itemPositionsListener,
-    ScrollPhysics physics,
-    int semanticChildCount,
-    EdgeInsets padding,
+    ItemScrollController? itemScrollController,
+    ItemPositionsListener? itemPositionsListener,
+    ScrollPhysics? physics,
+    int? semanticChildCount,
+    EdgeInsets? padding,
     bool addSemanticIndexes = true,
     bool addAutomaticKeepAlives = true,
     bool addRepaintBoundaries = true,
-    double minCacheExtent,
+    double? minCacheExtent,
     this.onPageAtBottom,
-  })  : assert(latestMessageIdBuilder != null),
-        assert(messageIds != null),
-        assert(loadingMoreStatusBuilder != null),
-        assert(itemCount != null),
-        assert(itemBuilder != null),
-        assert(separatorBuilder != null),
-        super(
+  }) : super(
           key: key,
           itemCount: itemCount,
           itemBuilder: itemBuilder,
@@ -64,13 +59,13 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
 
   final LatestMessageIdBuilder latestMessageIdBuilder;
 
-  final ChildIndexGetter findChildIndexCallback;
+  final ChildIndexGetter? findChildIndexCallback;
 
   final LoadingMoreStatusBuilder loadingMoreStatusBuilder;
 
   final FirstLoadedBuilder firstLoadedBuilder;
 
-  final OnPageAtBottom onPageAtBottom;
+  final OnPageAtBottom? onPageAtBottom;
 
   @override
   _ExtendedScrollablePositionedListState createState() => _ExtendedScrollablePositionedListState();
@@ -79,11 +74,12 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
 class _ExtendedScrollablePositionedListState extends ScrollablePositionedListState<ExtendedScrollablePositionedList> {
   bool _isUserScrolling = false;
   int _len = 0;
-  String _oldLastId;
+  String? _oldLastId;
   List<String> _oldMessageIds = [];
-  bool _oldContainLatestMessage;
-
-  VoidCallback _listener;
+  bool _oldContainLatestMessage = false;
+  int primaryTarget = 0;
+  double primaryAlign = 0;
+  double _lastBottomPadding = 0;
 
   bool get isFirstLoaded {
     if (widget.firstLoadedBuilder == null) return true;
@@ -105,20 +101,38 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
       ..addAll(widget.messageIds);
     _oldContainLatestMessage =
         (widget.initialScrollIndex == 0 && widget.initialAlignment == 0) ? true : containLatestMessage;
-    widget.itemPositionsNotifier?.itemPositions?.addListener(_listener = () {
-      if (mounted) {
-        setState(() {});
-      }
-      if (_listener != null) {
-        widget.itemPositionsNotifier?.itemPositions?.removeListener(_listener);
-      }
-    });
     super.initState();
   }
 
   @override
+  void onPositionsUpdated(Iterable<ItemPosition> itemPositions) {
+    _eventPositionsUpdated(itemPositions);
+    super.onPositionsUpdated(itemPositions);
+  }
+
+  void _eventPositionsUpdated(Iterable<ItemPosition> itemPositions) {
+    _updateIndexAndAlignment(itemPositions: itemPositions);
+    if (primaryAlign != primary.alignment || primary.target != primaryTarget) {
+      primaryAlign = primary.alignment ?? 0;
+      primaryTarget = primary.target;
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        setState(() {}); // update screen
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    _updateIndexAndAlignment();
+    final bottom = ui.window.viewInsets.bottom;
+    if (_lastBottomPadding != bottom) {
+      _lastBottomPadding = bottom;
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        _updateIndexAndAlignment(refresh: true);
+        primaryAlign = primary.alignment ?? 0;
+        primaryTarget = primary.target;
+        setState(() {}); // update screen
+      });
+    }
     return Listener(
       onPointerDown: (_) {
         _isUserScrolling = true;
@@ -144,8 +158,8 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
   }
 
   @override
-  void jumpTo({int index, double alignment}) {
-    final itemPositions = widget.itemPositionsNotifier?.itemPositions?.value;
+  void jumpTo({int? index, double? alignment, bool isOnlyFilledView = false}) {
+    final itemPositions = widget.itemPositionsNotifier?.itemPositions.value;
     if (itemPositions != null && itemPositions.isNotEmpty) {
       final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
       final bool hasFirst = positions.any((element) => element.index == 0);
@@ -153,29 +167,32 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
       if (hasFirst && hasLast) return;
     }
-    super.jumpTo(index: index, alignment: alignment);
+    super.jumpTo(index: index!, alignment: alignment, isOnlyFilledView: isOnlyFilledView);
   }
 
-  void _updateIndexAndAlignment() {
-    if (widget.messageIds == null || widget.messageIds.length == 0) return;
+  void _updateIndexAndAlignment({Iterable<ItemPosition>? itemPositions, bool refresh = false}) {
+    itemPositions ??= widget.itemPositionsNotifier?.itemPositions.value;
+    if (widget.messageIds.isEmpty) return;
     if (isTransitioning) return;
     final int newLen = widget.itemCount;
-    final itemPositions = widget.itemPositionsNotifier?.itemPositions?.value;
     if (itemPositions != null && itemPositions.isNotEmpty) {
       final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
       final first = positions.first;
       final last = positions.last;
       final bool hasFirst = positions.any((element) => element.index == 0);
-      final bool hasLast =
+      final bool hasLast = (widget.itemCount == positions.length) ||
           positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
+      final viewHeight =
+          primary.scrollController.hasClients ? primary.scrollController.position.viewportDimension : 600;
       if (hasFirst && hasLast) {
-        if (_len != widget.itemCount) {
+        if (_len != widget.itemCount || refresh) {
           primary.target = 0;
           secondary.target = 0;
-          if (first.itemLeadingEdge == 0 && last.itemTrailingEdge < 0.7) {
+
+          if (((last.itemOffset - first.itemOffset) < viewHeight) && last.itemTrailingEdge < 1) {
             if (last.itemTrailingEdge != 1) {
-              primary.alignment = 1 - last.itemTrailingEdge;
-              secondary.alignment = 1 - last.itemTrailingEdge;
+              primary.alignment = 1 - (last.itemOffset + last.itemSize) / viewHeight;
+              secondary.alignment = 1 - (last.itemOffset + last.itemSize) / viewHeight;
             }
           } else if (last.itemTrailingEdge == 1) {
             if (first.itemLeadingEdge < 0.3) {
@@ -199,8 +216,16 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
             primary.alignment = 0;
             secondary.target = 0;
             secondary.alignment = 0;
+            primary.scrollController.jumpTo(0);
           } else {
-            jumpTo(index: 0, alignment: 0);
+            final leadingPixel = first.itemLeadingEdge * viewHeight;
+            if (leadingPixel > -40 && leadingPixel < 20) {
+              // 40 文字訊息的一半高度
+              // 滑動超過訊息的 40 pixel 就會跳離 保持在底部 狀態
+              // a. 新訊息在剛填滿畫面時，如果沒有剛好對齊最下方，就不會觸發'保持在底部'
+              // b. 滑動時不距離不夠會被拉回底部
+              jumpTo(index: 0, alignment: 0); // jump to 0, ensure first item in sight
+            }
           }
         } else {
           final int diff = newLen - _len;

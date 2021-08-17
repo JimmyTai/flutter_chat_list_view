@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
@@ -32,13 +33,13 @@ const int _screenScrollCount = 2;
 /// All other parameters are the same as specified in [ListView].
 class ScrollablePositionedList extends StatefulWidget {
   const ScrollablePositionedList({
-    @required this.itemCount,
-    @required this.itemBuilder,
-    @required this.separatorBuilder,
+    required this.itemCount,
+    required this.itemBuilder,
+    required this.separatorBuilder,
     this.findChildIndexCallback,
-    Key key,
+    Key? key,
     this.itemScrollController,
-    ItemPositionsListener itemPositionsListener,
+    ItemPositionsListener? itemPositionsListener,
     this.initialScrollIndex = 0,
     this.initialAlignment = 0,
     this.scrollDirection = Axis.vertical,
@@ -53,7 +54,7 @@ class ScrollablePositionedList extends StatefulWidget {
   })  : assert(itemCount != null),
         assert(itemBuilder != null),
         assert(separatorBuilder != null),
-        itemPositionsNotifier = itemPositionsListener,
+        itemPositionsNotifier = itemPositionsListener as ItemPositionsNotifier?,
         super(key: key);
 
   /// Number of items the [itemBuilder] can produce.
@@ -67,13 +68,13 @@ class ScrollablePositionedList extends StatefulWidget {
   /// Called with 0 <= index < itemCount - 1.
   final IndexedWidgetBuilder separatorBuilder;
 
-  final ChildIndexGetter findChildIndexCallback;
+  final ChildIndexGetter? findChildIndexCallback;
 
   /// Controller for jumping or scrolling to an item.
-  final ItemScrollController itemScrollController;
+  final ItemScrollController? itemScrollController;
 
   /// Notifier that reports the items laid out in the list after each frame.
-  final ItemPositionsNotifier itemPositionsNotifier;
+  final ItemPositionsNotifier? itemPositionsNotifier;
 
   /// Index of an item to initially align within the viewport.
   final int initialScrollIndex;
@@ -102,15 +103,15 @@ class ScrollablePositionedList extends StatefulWidget {
   /// user stops dragging the scroll view.
   ///
   /// See [ScrollView.physics].
-  final ScrollPhysics physics;
+  final ScrollPhysics? physics;
 
   /// The number of children that will contribute semantic information.
   ///
   /// See [ScrollView.semanticChildCount] for more information.
-  final int semanticChildCount;
+  final int? semanticChildCount;
 
   /// The amount of space by which to inset the children.
-  final EdgeInsets padding;
+  final EdgeInsets? padding;
 
   /// Whether to wrap each child in an [IndexedSemantics].
   ///
@@ -134,7 +135,7 @@ class ScrollablePositionedList extends StatefulWidget {
   /// scrolls, so using the [ScrollController.scrollTo] method may result
   /// in builds of widgets that would otherwise already be built in the
   /// cache extent.
-  final double minCacheExtent;
+  final double? minCacheExtent;
 
   @override
   State<StatefulWidget> createState() => ScrollablePositionedListState();
@@ -148,14 +149,14 @@ class ItemScrollController {
   /// If `false`, then [jumpTo] and [scrollTo] must not be called.
   bool get isAttached => _scrollableListState != null;
 
-  ScrollablePositionedListState _scrollableListState;
+  ScrollablePositionedListState? _scrollableListState;
 
-  void setPosition({@required int index, double alignment = 0}) {
+  void setPosition({required int index, double alignment = 0}) {
     if (!isAttached) return;
-    _scrollableListState.primary.target = index;
-    _scrollableListState.secondary.target = index;
-    _scrollableListState.primary.alignment = alignment;
-    _scrollableListState.secondary.alignment = alignment;
+    _scrollableListState!.primary.target = index;
+    _scrollableListState!.secondary.target = index;
+    _scrollableListState!.primary.alignment = alignment;
+    _scrollableListState!.secondary.alignment = alignment;
   }
 
   /// Immediately, without animation, reconfigure the list so that the item at
@@ -174,9 +175,9 @@ class ItemScrollController {
   /// * 0 aligns the left edge of the item with the left edge of the view
   /// * 1 aligns the left edge of the item with the right edge of the view.
   /// * 0.5 aligns the left edge of the item with the center of the view.
-  void jumpTo({@required int index, double alignment = 0}) {
+  void jumpTo({required int index, double alignment = 0, bool isOnlyFilledView = false}) {
     if (isAttached) {
-      _scrollableListState.jumpTo(index: index, alignment: alignment);
+      _scrollableListState!.jumpTo(index: index, alignment: alignment, isOnlyFilledView: isOnlyFilledView);
     }
   }
 
@@ -202,16 +203,16 @@ class ItemScrollController {
   ///
   /// See [TweenSequenceItem.weight] for more info.
   Future<void> scrollTo({
-    @required int index,
+    required int index,
     double alignment = 0,
-    @required Duration duration,
+    required Duration duration,
     Curve curve = Curves.linear,
     List<double> opacityAnimationWeights = const [40, 20, 40],
   }) {
     assert(_scrollableListState != null);
     assert(opacityAnimationWeights.length == 3);
     assert(duration > Duration.zero);
-    return _scrollableListState._scrollTo(
+    return _scrollableListState!._scrollTo(
       index: index,
       alignment: alignment,
       duration: duration,
@@ -244,10 +245,12 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
 
   bool isTransitioning = false;
 
+  void onPositionsUpdated(Iterable<ItemPosition> itemPositions) {}
+
   @override
   void initState() {
     super.initState();
-    ItemPosition initialPosition = PageStorage.of(context).readState(context);
+    ItemPosition? initialPosition = PageStorage.of(context)!.readState(context);
     primary.target = initialPosition?.index ?? widget.initialScrollIndex;
     primary.alignment = initialPosition?.itemLeadingEdge ?? widget.initialAlignment;
     if (widget.itemCount > 0 && primary.target > widget.itemCount - 1) {
@@ -273,7 +276,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
 
   @override
   void didUpdateWidget(ScrollablePositionedList oldWidget) {
-    super.didUpdateWidget(oldWidget);
+    super.didUpdateWidget(oldWidget as T);
     if (oldWidget.itemScrollController?._scrollableListState == this) {
       oldWidget.itemScrollController?._detach();
     }
@@ -318,6 +321,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
                       padding: widget.padding,
                       addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
                       addRepaintBoundaries: widget.addRepaintBoundaries,
+                      onPositionsUpdated: onPositionsUpdated,
                     ),
                   ),
                 ),
@@ -363,10 +367,28 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
         widget.minCacheExtent ?? 0,
       );
 
-  void jumpTo({@required int index, double alignment}) {
+  bool get isItemFilledView {
+    try {
+      //final positions = widget.itemPositionListener.itemPositions.value;
+      final positions = widget.itemPositionsNotifier!.itemPositions.value;
+      final poslist = positions.toList()..sort((a, b) => (a.itemOffset - b.itemOffset).round());
+      final listHeight = primary.scrollController.position.viewportDimension;
+      if ((poslist.last.itemSize + poslist.last.itemOffset - poslist.first.itemOffset) > listHeight) {
+        return true;
+      }
+    }
+    // ignore: avoid_catches_without_on_clauses
+    catch (_) {}
+    return false;
+  }
+
+  void jumpTo({required int index, double? alignment, bool isOnlyFilledView = false}) {
     _stopScroll(canceled: true);
     if (index > widget.itemCount - 1) {
       index = widget.itemCount - 1;
+    }
+    if (isOnlyFilledView && !isItemFilledView) {
+      return;
     }
     setState(() {
       primary.scrollController.jumpTo(0);
@@ -376,18 +398,18 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
   }
 
   Future<void> _scrollTo({
-    @required int index,
-    double alignment,
-    @required Duration duration,
+    required int index,
+    double? alignment,
+    required Duration duration,
     Curve curve = Curves.linear,
-    @required List<double> opacityAnimationWeights,
+    required List<double> opacityAnimationWeights,
   }) async {
     if (index > widget.itemCount - 1) {
       index = widget.itemCount - 1;
     }
     if (isTransitioning) {
       _stopScroll(canceled: true);
-      SchedulerBinding.instance.addPostFrameCallback((_) {
+      SchedulerBinding.instance!.addPostFrameCallback((_) {
         _startScroll(
           index: index,
           alignment: alignment,
@@ -408,22 +430,22 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
   }
 
   Future<void> _startScroll({
-    @required int index,
-    double alignment,
-    @required Duration duration,
+    required int index,
+    double? alignment,
+    required Duration duration,
     Curve curve = Curves.linear,
-    @required List<double> opacityAnimationWeights,
+    required List<double> opacityAnimationWeights,
   }) async {
     final direction = index > primary.target ? 1 : -1;
     final itemPosition = primary.itemPositionsNotifier.itemPositions.value
-        .firstWhere((ItemPosition itemPosition) => itemPosition.index == index, orElse: () => null);
+        .firstWhereOrNull((ItemPosition itemPosition) => itemPosition.index == index);
     if (itemPosition != null) {
       // Scroll directly.
       final localScrollAmount = itemPosition.itemLeadingEdge * primary.scrollController.position.viewportDimension;
       await primary.scrollController.animateTo(
           primary.scrollController.offset +
               localScrollAmount -
-              alignment * primary.scrollController.position.viewportDimension,
+              alignment! * primary.scrollController.position.viewportDimension,
           duration: duration,
           curve: curve);
     } else {
@@ -431,14 +453,14 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
       final startCompleter = Completer<void>();
       final endCompleter = Completer<void>();
       startAnimationCallback = () {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
+        SchedulerBinding.instance!.addPostFrameCallback((_) {
           startAnimationCallback = () {};
 
           opacity.parent = _opacityAnimation(opacityAnimationWeights)
               .animate(AnimationController(vsync: this, duration: duration)..forward());
           secondary.scrollController.jumpTo(-direction *
               (_screenScrollCount * primary.scrollController.position.viewportDimension -
-                  alignment * secondary.scrollController.position.viewportDimension));
+                  alignment! * secondary.scrollController.position.viewportDimension));
 
           startCompleter.complete(primary.scrollController
               .animateTo(primary.scrollController.offset + direction * scrollAmount, duration: duration, curve: curve));
@@ -499,10 +521,11 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
     final itemPositions = primary.itemPositionsNotifier.itemPositions.value
         .where((ItemPosition position) => position.itemLeadingEdge < 1 && position.itemTrailingEdge > 0);
     if (itemPositions.isNotEmpty) {
-      PageStorage.of(context).writeState(context,
+      PageStorage.of(context)!.writeState(context,
           itemPositions.reduce((value, element) => value.itemLeadingEdge < element.itemLeadingEdge ? value : element));
     }
-    widget.itemPositionsNotifier?.itemPositions?.value = itemPositions;
+    widget.itemPositionsNotifier?.itemPositions.value = itemPositions;
+    onPositionsUpdated(itemPositions);
   }
 }
 
@@ -518,7 +541,7 @@ class _ListDisplayDetails {
   /// The desired alignment for [target].
   ///
   /// See [ItemScrollController.jumpTo] for an explanation of alignment.
-  double alignment = 0;
+  double? alignment = 0;
 
   final Key key;
 }

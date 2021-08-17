@@ -21,10 +21,13 @@ abstract class ItemPositionsListener {
 /// Position information for an item in the list.
 class ItemPosition {
   /// Create an [ItemPosition].
-  const ItemPosition(
-      {@required this.index,
-      @required this.itemLeadingEdge,
-      @required this.itemTrailingEdge});
+  const ItemPosition({
+    required this.index,
+    required this.itemLeadingEdge,
+    required this.itemTrailingEdge,
+    required this.itemOffset,
+    required this.itemSize,
+  });
 
   /// Index of the item.
   final int index;
@@ -41,6 +44,9 @@ class ItemPosition {
   /// May be greater than one if the item is partially visible.
   final double itemTrailingEdge;
 
+  final double itemOffset;
+  final double itemSize;
+
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
@@ -51,9 +57,7 @@ class ItemPosition {
   }
 
   @override
-  int get hashCode =>
-      31 * (31 * (7 + index.hashCode) + itemLeadingEdge.hashCode) +
-      itemTrailingEdge.hashCode;
+  int get hashCode => 31 * (31 * (7 + index.hashCode) + itemLeadingEdge.hashCode) + itemTrailingEdge.hashCode;
 
   @override
   String toString() =>

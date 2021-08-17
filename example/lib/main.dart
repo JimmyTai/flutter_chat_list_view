@@ -151,6 +151,10 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
         onPageAtBottom: (atBottom) {
           print('is page at bottom: $atBottom');
         },
+        latestMessageIdBuilder: () => data.last.dataIndex.toString(),
+        itemKeyPrefix: 'pre',
+        firstLoadedBuilder: () => true,
+        separatorKeyPrefix: 'spe',
         messageIds: data.map((item) => item.dataIndex.toString()).toList(),
         itemCount: data.length,
         itemBuilder: (context, index) => item(index, orientation),

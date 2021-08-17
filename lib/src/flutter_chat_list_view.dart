@@ -13,14 +13,14 @@ typedef LatestMessageIdBuilder = String Function();
 
 class ChatListView extends StatefulWidget {
   const ChatListView.builder({
-    Key key,
-    @required this.firstLoadedBuilder,
-    @required this.latestMessageIdBuilder,
-    @required this.messageIds,
-    @required this.itemCount,
-    @required this.itemBuilder,
-    @required this.itemKeyPrefix,
-    @required this.separatorKeyPrefix,
+    Key? key,
+    required this.firstLoadedBuilder,
+    required this.latestMessageIdBuilder,
+    required this.messageIds,
+    required this.itemCount,
+    required this.itemBuilder,
+    required this.itemKeyPrefix,
+    required this.separatorKeyPrefix,
     this.listViewKey,
     this.initialScrollIndex = 0,
     this.initialAlignment = 0.0,
@@ -38,22 +38,19 @@ class ChatListView extends StatefulWidget {
     this.onPageScrollStart,
     this.onPageScrollEnd,
     this.onPageAtBottom,
-  })  : assert(messageIds != null),
-        assert(itemCount != null),
-        assert(itemBuilder != null),
-        separatorBuilder = null,
+  })  : separatorBuilder = null,
         super(key: key);
 
   ChatListView.separated({
-    Key key,
-    @required this.firstLoadedBuilder,
-    @required this.latestMessageIdBuilder,
-    @required this.messageIds,
-    @required this.itemCount,
-    @required this.itemBuilder,
-    @required this.separatorBuilder,
-    @required this.itemKeyPrefix,
-    @required this.separatorKeyPrefix,
+    Key? key,
+    required this.firstLoadedBuilder,
+    required this.latestMessageIdBuilder,
+    required this.messageIds,
+    required this.itemCount,
+    required this.itemBuilder,
+    required this.separatorBuilder,
+    required this.itemKeyPrefix,
+    required this.separatorKeyPrefix,
     this.listViewKey,
     this.initialScrollIndex = 0,
     this.initialAlignment = 0.0,
@@ -71,13 +68,10 @@ class ChatListView extends StatefulWidget {
     this.onPageScrollStart,
     this.onPageScrollEnd,
     this.onPageAtBottom,
-  })  : assert(messageIds != null),
-        assert(itemCount != null),
-        assert(itemBuilder != null),
-        assert(separatorBuilder != null),
+  })  : assert(separatorBuilder != null),
         super(key: key);
 
-  final Key listViewKey;
+  final Key? listViewKey;
 
   final String itemKeyPrefix;
 
@@ -99,13 +93,13 @@ class ChatListView extends StatefulWidget {
 
   /// Called to build separators for between each item in the list.
   /// Called with 0 <= index < itemCount - 1.
-  final IndexedWidgetBuilder separatorBuilder;
+  final IndexedWidgetBuilder? separatorBuilder;
 
   /// Controller for jumping or scrolling to an item.
-  final ItemScrollController itemScrollController;
+  final ItemScrollController? itemScrollController;
 
   /// Notifier that reports the items laid out in the list after each frame.
-  final ItemPositionsListener itemPositionsListener;
+  final ItemPositionsListener? itemPositionsListener;
 
   /// Index of an item to initially align within the viewport.
   final int initialScrollIndex;
@@ -122,15 +116,15 @@ class ChatListView extends StatefulWidget {
   /// user stops dragging the scroll view.
   ///
   /// See [ScrollView.physics].
-  final ScrollPhysics physics;
+  final ScrollPhysics? physics;
 
   /// The number of children that will contribute semantic information.
   ///
   /// See [ScrollView.semanticChildCount] for more information.
-  final int semanticChildCount;
+  final int? semanticChildCount;
 
   /// The amount of space by which to inset the children.
-  final EdgeInsets padding;
+  final EdgeInsets? padding;
 
   /// Whether to wrap each child in an [IndexedSemantics].
   ///
@@ -154,40 +148,39 @@ class ChatListView extends StatefulWidget {
   /// scrolls, so using the [ScrollController.scrollTo] method may result
   /// in builds of widgets that would otherwise already be built in the
   /// cache extent.
-  final double minCacheExtent;
+  final double? minCacheExtent;
 
   /// Called when the [child] reaches the start of the list
-  final AsyncCallback onStartOfPage;
+  final AsyncCallback? onStartOfPage;
 
   /// Called when the [child] reaches the end of the list
-  final AsyncCallback onEndOfPage;
+  final AsyncCallback? onEndOfPage;
 
   /// Called when the list scrolling starts
-  final VoidCallback onPageScrollStart;
+  final VoidCallback? onPageScrollStart;
 
   /// Called when the list scrolling ends
-  final VoidCallback onPageScrollEnd;
+  final VoidCallback? onPageScrollEnd;
 
-  final OnPageAtBottom onPageAtBottom;
+  final OnPageAtBottom? onPageAtBottom;
 
   @override
   _ChatListViewState createState() => _ChatListViewState();
 }
 
 class _ChatListViewState extends State<ChatListView> {
-  LazyLoadScrollController _lazyLoadController;
-  bool _isAtBottom;
+  late LazyLoadScrollController _lazyLoadController;
+  bool _isAtBottom = false;
 
   @override
   void initState() {
     _lazyLoadController = LazyLoadScrollController();
-    widget.itemPositionsListener?.itemPositions?.addListener(_onItemPositionsListener);
+    widget.itemPositionsListener?.itemPositions.addListener(_onItemPositionsListener);
     super.initState();
   }
 
   bool get containLatestMessage {
-    if (widget.latestMessageIdBuilder == null) return true;
-    if (widget.messageIds == null || widget.messageIds.length == 0) return true;
+    if (widget.messageIds.length == 0) return true;
     return widget.messageIds.contains(widget.latestMessageIdBuilder());
   }
 
@@ -197,7 +190,6 @@ class _ChatListViewState extends State<ChatListView> {
     final itemPositionsNotifier = widget.itemPositionsListener;
     final bool isAtBottom = itemPositionsNotifier == null ||
         (containLatestMessage &&
-            itemPositionsNotifier != null &&
             itemPositionsNotifier.itemPositions.value.isNotEmpty &&
             itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0));
     if (isAtBottom != _isAtBottom || (DateTime.now().millisecondsSinceEpoch - _lastCallOnPageAtBottom > 500)) {
@@ -221,21 +213,19 @@ class _ChatListViewState extends State<ChatListView> {
         latestMessageIdBuilder: widget.latestMessageIdBuilder,
         messageIds: widget.messageIds,
         loadingMoreStatusBuilder: () {
-          return _lazyLoadController?.loadMoreStatus == LoadingStatus.loading;
+          return _lazyLoadController.loadMoreStatus == LoadingStatus.loading;
         },
         itemCount: widget.itemCount,
         itemBuilder: widget.itemBuilder,
-        separatorBuilder: widget.separatorBuilder,
+        separatorBuilder: widget.separatorBuilder!,
         findChildIndexCallback: (key) {
           if (!_isAtBottom) return null;
-          int index;
-          if (key != null && key is ValueKey && key.value is String) {
+          int? index;
+          if (key is ValueKey && key.value is String) {
             final String parsedKey =
                 (key.value as String).replaceAll(widget.itemKeyPrefix, '').replaceAll(widget.separatorKeyPrefix, '');
-            if (widget.messageIds != null) {
-              index = widget.messageIds.indexWhere((id) => parsedKey == '$id') ?? -1;
-              index = (index >= 0 && index < widget.itemCount) ? index : null;
-            }
+            index = widget.messageIds.indexWhere((id) => parsedKey == '$id');
+            index = (index >= 0 && index < widget.itemCount) ? index : null;
           }
           return index;
         },
@@ -257,8 +247,8 @@ class _ChatListViewState extends State<ChatListView> {
 
   @override
   void dispose() {
-    widget.itemPositionsListener?.itemPositions?.removeListener(_onItemPositionsListener);
-    _lazyLoadController?.dispose();
+    widget.itemPositionsListener?.itemPositions.removeListener(_onItemPositionsListener);
+    _lazyLoadController.dispose();
     super.dispose();
   }
 }
