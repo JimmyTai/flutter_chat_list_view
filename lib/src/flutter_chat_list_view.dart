@@ -176,7 +176,7 @@ class ChatListView extends StatefulWidget {
 
 class _ChatListViewState extends State<ChatListView> {
   LazyLoadScrollController _lazyLoadController;
-  bool _isListOverflow = false;
+  bool _isListOverflow;
   bool _isAtBottom;
 
   @override
@@ -196,11 +196,12 @@ class _ChatListViewState extends State<ChatListView> {
 
   void _onItemPositionsListener() {
     final itemPositionsNotifier = widget.itemPositionsListener;
-    final bool isAtBottom = itemPositionsNotifier == null || !_isListOverflow ||
+    final bool isAtBottom = itemPositionsNotifier == null || (_isListOverflow != null && !_isListOverflow) ||
         (containLatestMessage &&
             itemPositionsNotifier != null &&
             itemPositionsNotifier.itemPositions.value.isNotEmpty &&
             itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0));
+    print('isAtBottom: $isAtBottom, isListOverflow: $_isListOverflow, containLatestMessage: $containLatestMessage');
     if (isAtBottom != _isAtBottom || (DateTime.now().millisecondsSinceEpoch - _lastCallOnPageAtBottom > 500)) {
       widget.onPageAtBottom?.call(isAtBottom);
       _lastCallOnPageAtBottom = DateTime.now().millisecondsSinceEpoch;
@@ -228,9 +229,11 @@ class _ChatListViewState extends State<ChatListView> {
         itemBuilder: widget.itemBuilder,
         separatorBuilder: widget.separatorBuilder,
         onScrollOffsetChanged: (size, minScrollExtent, maxScrollExtent) {
+          print('[ChatListView] size: $size, min: $minScrollExtent, max: $maxScrollExtent');
           final bool isListOverflow = maxScrollExtent > size.height;
           if (isListOverflow != _isListOverflow) {
             _isListOverflow = isListOverflow;
+            _onItemPositionsListener();
           }
         },
         findChildIndexCallback: (key) {
