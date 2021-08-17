@@ -12,6 +12,7 @@ import 'element_registry.dart';
 import 'item_positions_listener.dart';
 import 'item_positions_notifier.dart';
 import 'scroll_view.dart';
+import 'type_defines.dart';
 
 /// A list of widgets similar to [ListView], except scroll control
 /// and position reporting is based on index rather than pixel offset.
@@ -45,6 +46,7 @@ class PositionedList extends StatefulWidget {
     this.addSemanticIndexes = true,
     this.addRepaintBoundaries = true,
     this.addAutomaticKeepAlives = true,
+    this.onScrollOffsetChanged,
   })  : assert(itemCount != null),
         assert(itemBuilder != null),
         assert((positionedIndex == 0) || (positionedIndex < itemCount));
@@ -125,6 +127,8 @@ class PositionedList extends StatefulWidget {
   /// See [SliverChildBuilderDelegate.addAutomaticKeepAlives].
   final bool addAutomaticKeepAlives;
 
+  final OnScrollOffsetChanged onScrollOffsetChanged;
+
   @override
   State<StatefulWidget> createState() => _PositionedListState();
 }
@@ -175,6 +179,7 @@ class _PositionedListState extends State<PositionedList> {
         cacheExtent: widget.cacheExtent,
         physics: widget.physics,
         semanticChildCount: widget.semanticChildCount ?? widget.itemCount,
+        onScrollOffsetChanged: widget.onScrollOffsetChanged,
         slivers: <Widget>[
           if (widget.positionedIndex > 0)
             SliverPadding(

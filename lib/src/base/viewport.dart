@@ -8,6 +8,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
+import 'type_defines.dart';
+
 /// A render object that is bigger on the inside.
 ///
 /// Version of [Viewport] with some modifications to how extents are
@@ -23,7 +25,9 @@ class UnboundedViewport extends Viewport {
     Key center,
     double cacheExtent,
     List<Widget> slivers = const <Widget>[],
+    OnScrollOffsetChanged onScrollOffsetChanged,
   })  : _anchor = anchor,
+        _onScrollOffsetChanged = onScrollOffsetChanged,
         super(
             key: key,
             axisDirection: axisDirection,
@@ -36,6 +40,7 @@ class UnboundedViewport extends Viewport {
   // [Viewport] enforces constraints on [Viewport.anchor], so we need our own
   // version.
   final double _anchor;
+  final OnScrollOffsetChanged _onScrollOffsetChanged;
 
   @override
   double get anchor => _anchor;
@@ -48,6 +53,7 @@ class UnboundedViewport extends Viewport {
       anchor: anchor,
       offset: offset,
       cacheExtent: cacheExtent,
+      onScrollOffsetChanged: _onScrollOffsetChanged,
     );
   }
 }
@@ -70,7 +76,9 @@ class UnboundedRenderViewport extends RenderViewport {
     List<RenderSliver> children,
     RenderSliver center,
     double cacheExtent,
+    OnScrollOffsetChanged onScrollOffsetChanged,
   })  : _anchor = anchor,
+        _onScrollOffsetChanged = onScrollOffsetChanged,
         super(
             axisDirection: axisDirection,
             crossAxisDirection: crossAxisDirection,
@@ -82,6 +90,7 @@ class UnboundedRenderViewport extends RenderViewport {
   static const int _maxLayoutCycles = 10;
 
   double _anchor;
+  final OnScrollOffsetChanged _onScrollOffsetChanged;
 
   // Out-of-band data computed during layout.
   double _minScrollExtent;
@@ -198,6 +207,7 @@ class UnboundedRenderViewport extends RenderViewport {
       }
       count += 1;
     } while (count < _maxLayoutCycles);
+    _onScrollOffsetChanged?.call(size, _minScrollExtent, _maxScrollExtent);
     assert(() {
       if (count >= _maxLayoutCycles) {
         assert(count != 1);

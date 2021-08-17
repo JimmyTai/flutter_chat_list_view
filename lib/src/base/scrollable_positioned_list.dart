@@ -13,6 +13,7 @@ import 'item_positions_listener.dart';
 import 'item_positions_notifier.dart';
 import 'positioned_list.dart';
 import 'post_mount_callback.dart';
+import 'type_defines.dart';
 
 /// Number of screens to scroll when scrolling a long distance.
 const int _screenScrollCount = 2;
@@ -50,6 +51,7 @@ class ScrollablePositionedList extends StatefulWidget {
     this.addAutomaticKeepAlives = true,
     this.addRepaintBoundaries = true,
     this.minCacheExtent,
+    this.onScrollOffsetChanged,
   })  : assert(itemCount != null),
         assert(itemBuilder != null),
         assert(separatorBuilder != null),
@@ -135,6 +137,8 @@ class ScrollablePositionedList extends StatefulWidget {
   /// in builds of widgets that would otherwise already be built in the
   /// cache extent.
   final double minCacheExtent;
+
+  final OnScrollOffsetChanged onScrollOffsetChanged;
 
   @override
   State<StatefulWidget> createState() => ScrollablePositionedListState();
@@ -318,6 +322,7 @@ class ScrollablePositionedListState<T extends ScrollablePositionedList> extends 
                       padding: widget.padding,
                       addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
                       addRepaintBoundaries: widget.addRepaintBoundaries,
+                      onScrollOffsetChanged: widget.onScrollOffsetChanged,
                     ),
                   ),
                 ),

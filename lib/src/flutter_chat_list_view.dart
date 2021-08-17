@@ -176,6 +176,7 @@ class ChatListView extends StatefulWidget {
 
 class _ChatListViewState extends State<ChatListView> {
   LazyLoadScrollController _lazyLoadController;
+  bool _isListOverflow = false;
   bool _isAtBottom;
 
   @override
@@ -195,7 +196,7 @@ class _ChatListViewState extends State<ChatListView> {
 
   void _onItemPositionsListener() {
     final itemPositionsNotifier = widget.itemPositionsListener;
-    final bool isAtBottom = itemPositionsNotifier == null ||
+    final bool isAtBottom = itemPositionsNotifier == null || !_isListOverflow ||
         (containLatestMessage &&
             itemPositionsNotifier != null &&
             itemPositionsNotifier.itemPositions.value.isNotEmpty &&
@@ -226,6 +227,12 @@ class _ChatListViewState extends State<ChatListView> {
         itemCount: widget.itemCount,
         itemBuilder: widget.itemBuilder,
         separatorBuilder: widget.separatorBuilder,
+        onScrollOffsetChanged: (size, minScrollExtent, maxScrollExtent) {
+          final bool isListOverflow = maxScrollExtent > size.height;
+          if (isListOverflow != _isListOverflow) {
+            _isListOverflow = isListOverflow;
+          }
+        },
         findChildIndexCallback: (key) {
           if (!_isAtBottom) return null;
           int index;

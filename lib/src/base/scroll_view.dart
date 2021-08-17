@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 import 'viewport.dart';
+import 'type_defines.dart';
 
 /// A version of [CustomScrollView] that allows does not constrict the extents
 /// to be within 0 and 1. See [CustomScrollView] for more information.
@@ -25,7 +26,9 @@ class UnboundedCustomScrollView extends CustomScrollView {
     List<Widget> slivers = const <Widget>[],
     int semanticChildCount,
     DragStartBehavior dragStartBehavior = DragStartBehavior.start,
+    OnScrollOffsetChanged onScrollOffsetChanged,
   })  : _anchor = anchor,
+        _onScrollOffsetChanged = onScrollOffsetChanged,
         super(
           key: key,
           scrollDirection: scrollDirection,
@@ -44,6 +47,8 @@ class UnboundedCustomScrollView extends CustomScrollView {
   // [CustomScrollView] enforces constraints on [CustomScrollView.anchor], so
   // we need our own version.
   final double _anchor;
+
+  final OnScrollOffsetChanged _onScrollOffsetChanged;
 
   @override
   double get anchor => _anchor;
@@ -71,6 +76,7 @@ class UnboundedCustomScrollView extends CustomScrollView {
       cacheExtent: cacheExtent,
       center: center,
       anchor: anchor,
+      onScrollOffsetChanged: _onScrollOffsetChanged,
     );
   }
 }

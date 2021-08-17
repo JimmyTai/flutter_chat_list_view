@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import './base/scrollable_positioned_list.dart';
 import 'base/item_positions_listener.dart';
+import 'base/type_defines.dart';
 
 typedef FirstLoadedBuilder = bool Function();
 typedef LoadingMoreStatusBuilder = bool Function();
@@ -32,6 +33,7 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
     bool addRepaintBoundaries = true,
     double minCacheExtent,
     this.onPageAtBottom,
+    OnScrollOffsetChanged onScrollOffsetChanged,
   })  : assert(latestMessageIdBuilder != null),
         assert(messageIds != null),
         assert(loadingMoreStatusBuilder != null),
@@ -57,6 +59,7 @@ class ExtendedScrollablePositionedList extends ScrollablePositionedList {
           addAutomaticKeepAlives: addAutomaticKeepAlives,
           addRepaintBoundaries: addRepaintBoundaries,
           minCacheExtent: minCacheExtent,
+          onScrollOffsetChanged: onScrollOffsetChanged,
         );
 
   /// all the message Ids in your list, the latest message is from position 0
