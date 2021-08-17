@@ -201,7 +201,6 @@ class _ChatListViewState extends State<ChatListView> {
             itemPositionsNotifier != null &&
             itemPositionsNotifier.itemPositions.value.isNotEmpty &&
             itemPositionsNotifier.itemPositions.value.any((element) => element.index == 0));
-    print('isAtBottom: $isAtBottom, isListOverflow: $_isListOverflow, containLatestMessage: $containLatestMessage');
     if (isAtBottom != _isAtBottom || (DateTime.now().millisecondsSinceEpoch - _lastCallOnPageAtBottom > 500)) {
       widget.onPageAtBottom?.call(isAtBottom);
       _lastCallOnPageAtBottom = DateTime.now().millisecondsSinceEpoch;
