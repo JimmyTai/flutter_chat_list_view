@@ -221,7 +221,7 @@ class _PositionedListState extends State<PositionedList> {
                   if (widget.findChildIndexCallback != null) {
                     final int index = widget.findChildIndexCallback(key);
                     if (index != null) {
-                      rawIndex = (index * 2) - (2 * widget.positionedIndex);
+                      rawIndex = (index - widget.positionedIndex) * 2;
                       rawIndex = rawIndex >= centerItemCount ? null : rawIndex;
                     }
                   }
@@ -251,9 +251,9 @@ class _PositionedListState extends State<PositionedList> {
                       final int index = widget.findChildIndexCallback(key);
                       if (index != null) {
                         if (key.toString().contains('root')) {
-                          rawIndex = (index * 2) - (2 * widget.positionedIndex) - 1;
+                          rawIndex = (index - widget.positionedIndex) * 2 - 1;
                         } else {
-                          rawIndex = (index * 2) - (2 * widget.positionedIndex);
+                          rawIndex = (index - widget.positionedIndex) * 2;
                         }
                         rawIndex = rawIndex >= trailingItemCount ? null : rawIndex;
                       }

@@ -147,10 +147,10 @@ class _LazyLoadScrollViewState extends State<LazyLoadScrollView> {
 
   Future<void> _waitNextBuild() async {
     final Completer completer = Completer();
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(Duration(milliseconds: 250));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       completer.complete();
     });
-    await completer.future.timeout(Duration(milliseconds: 500), onTimeout: () {});
+    await completer.future.timeout(Duration(milliseconds: 250), onTimeout: () {});
   }
 }

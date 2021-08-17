@@ -164,30 +164,8 @@ class _ExtendedScrollablePositionedListState extends ScrollablePositionedListSta
     if (itemPositions != null && itemPositions.isNotEmpty) {
       final positions = itemPositions.toList()..sort((a, b) => (a.index - b.index));
       final first = positions.first;
-      final last = positions.last;
       final bool hasFirst = positions.any((element) => element.index == 0);
-      final bool hasLast =
-          positions.any((element) => element.index == (_len - 1) || element.index == (widget.itemCount - 1));
-      if (hasFirst && hasLast) {
-        if (_len != widget.itemCount) {
-          primary.target = 0;
-          secondary.target = 0;
-          if (first.itemLeadingEdge == 0 && last.itemTrailingEdge < 0.7) {
-            if (last.itemTrailingEdge != 1) {
-              primary.alignment = 1 - last.itemTrailingEdge;
-              secondary.alignment = 1 - last.itemTrailingEdge;
-            }
-          } else if (last.itemTrailingEdge == 1) {
-            if (first.itemLeadingEdge < 0.3) {
-              primary.alignment = 0;
-              secondary.alignment = 0;
-            }
-          } else {
-            primary.alignment = 0;
-            secondary.alignment = 0;
-          }
-        }
-      } else if (!isFirstLoaded) {
+      if (!isFirstLoaded) {
         primary.target = 0;
         primary.alignment = 0;
         secondary.target = 0;
