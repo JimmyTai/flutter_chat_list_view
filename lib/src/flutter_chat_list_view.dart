@@ -228,7 +228,6 @@ class _ChatListViewState extends State<ChatListView> {
         itemBuilder: widget.itemBuilder,
         separatorBuilder: widget.separatorBuilder,
         onScrollOffsetChanged: (size, minScrollExtent, maxScrollExtent) {
-          print('[ChatListView] size: $size, min: $minScrollExtent, max: $maxScrollExtent');
           final bool isListOverflow = maxScrollExtent > size.height;
           if (isListOverflow != _isListOverflow) {
             _isListOverflow = isListOverflow;
